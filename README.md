@@ -39,7 +39,13 @@ Set any of them to override, globally or on a wrapper:
 }
 ```
 
-Dark mode follows a `.dark` class or `[data-theme="dark"]` attribute on any ancestor. Components may add their own `--gc-*` variables; each component's section lists them.
+Dark mode follows a `.dark` class or `[data-theme="dark"]` attribute on any ancestor (works with `next-themes` and hand-rolled toggles). If your app follows the OS setting instead, opt in with `data-gc-theme="system"`:
+
+```html
+<html data-gc-theme="system">
+```
+
+Components may add their own `--gc-*` variables; each component's section lists them.
 
 ## Components
 

@@ -12,7 +12,8 @@
 
 /*
  * Shared colour tokens. Each resolves to the consumer's --gc-<name> override,
- * else the --gc-default-<name> below (flips in dark mode).
+ * else the --gc-default-<name> below (flips in dark mode). Defaults are
+ * Tailwind palette vars, never literal colours.
  * `inline` makes utilities embed the var() chain, so it resolves on each
  * element and a nested .dark / [data-theme="dark"] subtree picks it up.
  * Use as bg-gc-card, text-gc-muted-fg, stroke-gc-primary, …
@@ -28,21 +29,35 @@
 
 @layer theme {
   :root {
-    --gc-default-fg: hsl(222.2 84% 4.9%);
-    --gc-default-muted: hsl(210 40% 96.1%);
-    --gc-default-muted-fg: hsl(215.4 16.3% 46.9%);
-    --gc-default-border: hsl(214.3 31.8% 91.4%);
-    --gc-default-primary: hsl(221.2 83.2% 53.3%);
-    --gc-default-card: hsl(0 0% 100%);
+    --gc-default-fg: var(--color-slate-950);
+    --gc-default-muted: var(--color-slate-100);
+    --gc-default-muted-fg: var(--color-slate-500);
+    --gc-default-border: var(--color-slate-200);
+    --gc-default-primary: var(--color-blue-600);
+    --gc-default-card: var(--color-white);
   }
 
   .dark,
   [data-theme="dark"] {
-    --gc-default-fg: hsl(210 40% 98%);
-    --gc-default-muted: hsl(217.2 32.6% 17.5%);
-    --gc-default-muted-fg: hsl(215 20.2% 65.1%);
-    --gc-default-border: hsl(217.2 32.6% 20%);
-    --gc-default-primary: hsl(217.2 91.2% 59.8%);
-    --gc-default-card: hsl(222.2 84% 4.9%);
+    --gc-default-fg: var(--color-slate-50);
+    --gc-default-muted: var(--color-slate-800);
+    --gc-default-muted-fg: var(--color-slate-400);
+    --gc-default-border: var(--color-slate-800);
+    --gc-default-primary: var(--color-blue-500);
+    --gc-default-card: var(--color-slate-950);
+  }
+
+  /* Opt-in OS dark mode. Not automatic: an app whose light mode just removes
+   * .dark would otherwise show a dark calendar on a light page. Keep in sync
+   * with the block above. */
+  @media (prefers-color-scheme: dark) {
+    [data-gc-theme="system"] {
+      --gc-default-fg: var(--color-slate-50);
+      --gc-default-muted: var(--color-slate-800);
+      --gc-default-muted-fg: var(--color-slate-400);
+      --gc-default-border: var(--color-slate-800);
+      --gc-default-primary: var(--color-blue-500);
+      --gc-default-card: var(--color-slate-950);
+    }
   }
 }
