@@ -1,0 +1,48 @@
+/*
+ * Compiled to dist/style.css. Consumers import it once:
+ *   import "react-goal-calendar/style.css";
+ *
+ * Theme + utilities only, no preflight, so the host app's base styles are
+ * left alone. source(none) + @source limits class scanning to src/.
+ */
+@layer theme, utilities;
+@import "tailwindcss/theme" layer(theme);
+@import "tailwindcss/utilities" layer(utilities) source(none);
+@source "./";
+
+/*
+ * Shared colour tokens. Each resolves to the consumer's --gc-<name> override,
+ * else the --gc-default-<name> below (flips in dark mode).
+ * `inline` makes utilities embed the var() chain, so it resolves on each
+ * element and a nested .dark / [data-theme="dark"] subtree picks it up.
+ * Use as bg-gc-card, text-gc-muted-fg, stroke-gc-primary, …
+ */
+@theme inline {
+  --color-gc-fg: var(--gc-fg, var(--gc-default-fg));
+  --color-gc-muted: var(--gc-muted, var(--gc-default-muted));
+  --color-gc-muted-fg: var(--gc-muted-fg, var(--gc-default-muted-fg));
+  --color-gc-border: var(--gc-border, var(--gc-default-border));
+  --color-gc-primary: var(--gc-primary, var(--gc-default-primary));
+  --color-gc-card: var(--gc-card, var(--gc-default-card));
+}
+
+@layer theme {
+  :root {
+    --gc-default-fg: hsl(222.2 84% 4.9%);
+    --gc-default-muted: hsl(210 40% 96.1%);
+    --gc-default-muted-fg: hsl(215.4 16.3% 46.9%);
+    --gc-default-border: hsl(214.3 31.8% 91.4%);
+    --gc-default-primary: hsl(221.2 83.2% 53.3%);
+    --gc-default-card: hsl(0 0% 100%);
+  }
+
+  .dark,
+  [data-theme="dark"] {
+    --gc-default-fg: hsl(210 40% 98%);
+    --gc-default-muted: hsl(217.2 32.6% 17.5%);
+    --gc-default-muted-fg: hsl(215 20.2% 65.1%);
+    --gc-default-border: hsl(217.2 32.6% 20%);
+    --gc-default-primary: hsl(217.2 91.2% 59.8%);
+    --gc-default-card: hsl(222.2 84% 4.9%);
+  }
+}
