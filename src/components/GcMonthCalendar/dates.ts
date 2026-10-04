@@ -56,3 +56,14 @@ export function addMonths(month: string, n: number): string {
   date.setMonth(date.getMonth() + n);
   return toDateKey(date).slice(0, 7);
 }
+
+// Malformed bounds are ignored. `YYYY-MM` strings compare correctly as text.
+export function clampMonth(
+  month: string,
+  min: string | undefined,
+  max: string | undefined,
+): string {
+  if (isMonthKey(min) && month < min) return min;
+  if (isMonthKey(max) && month > max) return max;
+  return month;
+}

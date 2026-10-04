@@ -487,3 +487,44 @@ describe("GcMonthCalendar navigation", () => {
     expect(screen.getByRole("status")).toHaveTextContent("Sep 2026");
   });
 });
+
+describe("GcMonthCalendar month bounds", () => {
+  // aria-disabled, not disabled: a disabled button drops keyboard focus to <body>.
+  it("turns off Previous at minMonth and Next at maxMonth", async () => {
+    const user = userEvent.setup();
+    const onMonthChange = vi.fn();
+    renderCalendar({ minMonth: "2026-09", maxMonth: "2026-10", onMonthChange });
+    const previous = screen.getByRole("button", { name: "Previous month" });
+    const next = screen.getByRole("button", { name: "Next month" });
+    expect(previous).toHaveAttribute("aria-disabled", "true");
+    expect(next).not.toHaveAttribute("aria-disabled");
+    await user.click(next);
+    expect(next).toHaveAttribute("aria-disabled", "true");
+    expect(next).toBeEnabled();
+    expect(previous).not.toHaveAttribute("aria-disabled");
+    await user.click(next);
+    expect(onMonthChange).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("status")).toHaveTextContent("Oct 2026");
+  });
+
+  it("starts inside the bounds when defaultMonth is outside them", () => {
+    const { unmount } = renderCalendar({
+      defaultMonth: "2026-01",
+      minMonth: "2026-06",
+    });
+    expect(screen.getByRole("status")).toHaveTextContent("Jun 2026");
+    unmount();
+    renderCalendar({ defaultMonth: "2027-05", maxMonth: "2026-12" });
+    expect(screen.getByRole("status")).toHaveTextContent("Dec 2026");
+  });
+
+  it("ignores malformed bounds", () => {
+    renderCalendar({ minMonth: "2026-9", maxMonth: "soon" });
+    expect(
+      screen.getByRole("button", { name: "Previous month" }),
+    ).not.toHaveAttribute("aria-disabled");
+    expect(
+      screen.getByRole("button", { name: "Next month" }),
+    ).not.toHaveAttribute("aria-disabled");
+  });
+});

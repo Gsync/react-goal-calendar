@@ -34,6 +34,10 @@ interface GcMonthCalendarOwnProps {
    * @defaultValue the month of `today`
    */
   defaultMonth?: string;
+  /** Earliest month the user can navigate to, as `YYYY-MM`. */
+  minMonth?: string;
+  /** Latest month the user can navigate to, as `YYYY-MM`. */
+  maxMonth?: string;
   /** Called with the new month (`YYYY-MM`) when the user navigates. */
   onMonthChange?: (month: string) => void;
   /**

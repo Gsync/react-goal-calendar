@@ -2,6 +2,7 @@ import { forwardRef, useId, useMemo, useState } from "react";
 import { cn } from "../../lib/cn";
 import {
   addMonths,
+  clampMonth,
   isDateKey,
   isMonthKey,
   monthWeeks,
@@ -17,7 +18,7 @@ const ROOT =
   "box-border rounded-xl border border-gc-border bg-gc-card p-4 text-gc-fg";
 
 const NAV_BUTTON =
-  "inline-flex size-8 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-0 text-gc-muted-fg hover:bg-gc-muted hover:text-gc-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gc-primary";
+  "inline-flex size-8 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-0 text-gc-muted-fg hover:bg-gc-muted hover:text-gc-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gc-primary aria-disabled:cursor-not-allowed aria-disabled:opacity-40 aria-disabled:hover:bg-transparent aria-disabled:hover:text-gc-muted-fg";
 
 // Mirrored under dir="rtl" so "previous" still points toward the start.
 function Chevron({ d }: { d: string }) {
@@ -46,6 +47,8 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
       values,
       today,
       defaultMonth,
+      minMonth,
+      maxMonth,
       onMonthChange,
       locale = "en-US",
       className,
@@ -64,8 +67,14 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
           .slice(0, 2)
       : [];
     const [month, setMonth] = useState(() =>
-      isMonthKey(defaultMonth) ? defaultMonth : todayKey.slice(0, 7),
+      clampMonth(
+        isMonthKey(defaultMonth) ? defaultMonth : todayKey.slice(0, 7),
+        minMonth,
+        maxMonth,
+      ),
     );
+    const canGoBack = !isMonthKey(minMonth) || month > minMonth;
+    const canGoForward = !isMonthKey(maxMonth) || month < maxMonth;
 
     function showMonth(next: string) {
       setMonth(next);
@@ -100,7 +109,10 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
             <button
               type="button"
               aria-label="Previous month"
-              onClick={() => showMonth(addMonths(month, -1))}
+              aria-disabled={!canGoBack || undefined}
+              onClick={() => {
+                if (canGoBack) showMonth(addMonths(month, -1));
+              }}
               className={NAV_BUTTON}
             >
               <Chevron d="M10 3 5 8l5 5" />
@@ -108,7 +120,10 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
             <button
               type="button"
               aria-label="Next month"
-              onClick={() => showMonth(addMonths(month, 1))}
+              aria-disabled={!canGoForward || undefined}
+              onClick={() => {
+                if (canGoForward) showMonth(addMonths(month, 1));
+              }}
               className={NAV_BUTTON}
             >
               <Chevron d="m6 3 5 5-5 5" />
