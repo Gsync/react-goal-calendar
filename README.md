@@ -49,7 +49,69 @@ Components may add their own `--gc-*` variables; each component's section lists 
 
 ## Components
 
-_None yet._
+### GcMonthCalendar
+
+A month of days, each with one or two progress rings: the outer ring for the first goal, the inner
+ring for the second. Weeks start on Monday. Days are read-only; the only controls are the previous
+and next month buttons.
+
+```tsx
+import { GcMonthCalendar, type GcGoal } from "react-goal-calendar";
+
+const goals: [GcGoal, GcGoal] = [
+  { id: "jobs", label: "Jobs", target: 3 },
+  { id: "activity", label: "Activity", target: 2, unit: "h" },
+];
+
+<GcMonthCalendar
+  goals={goals}
+  values={{
+    "2026-09-01": { jobs: 3, activity: 1.5 },
+    "2026-09-02": { jobs: 1 },
+  }}
+  today="2026-09-24"
+/>;
+```
+
+Declare `goals` inline or type it as `[GcGoal]` / `[GcGoal, GcGoal]`. A plain `GcGoal[]` is
+rejected because at most two rings are drawn.
+
+| Prop                    | Type                                             | Default            |
+| ----------------------- | ------------------------------------------------ | ------------------ |
+| `goals`                 | `[GcGoal]` or `[GcGoal, GcGoal]`                 | required           |
+| `values`                | `{ [date: "YYYY-MM-DD"]: { [goalId]: number } }` | `{}`               |
+| `today`                 | `"YYYY-MM-DD"`                                   | current local date |
+| `defaultMonth`          | `"YYYY-MM"`                                      | month of `today`   |
+| `minMonth` / `maxMonth` | `"YYYY-MM"`                                      | unbounded          |
+| `onMonthChange`         | `(month: "YYYY-MM") => void`                     |                    |
+| `locale`                | BCP 47 string                                    | `"en-US"`          |
+| `className`             | `string`                                         |                    |
+
+Other `<div>` props pass through to the root, and `ref` points at it.
+
+`GcGoal` is `{ id: string; label: string; target: number; unit?: string }`.
+
+- A ring shows `done / target` and is full once the target is reached. The accessible text keeps the
+  real amount ("Jobs 5 of 3").
+- A target of 0 is always met. Missing, negative or non-numeric amounts count as 0.
+- Days after `today` are dimmed and show empty rings, even if `values` has entries for them. Their
+  accessible text ends in ", upcoming".
+- Each day's accessible text reads like "Tuesday, September 1: Jobs 3 of 3, Activity 1.5 of 2 h.
+  All goals met." (English in this version; dates and numbers follow `locale`).
+
+Each day `<td>` carries these attributes when they apply, for styling or tests: `data-today` (also
+`aria-current="date"`), `data-future`, `data-complete` (every goal met), `data-empty` (nothing
+recorded).
+
+**Server rendering:** pass `today`. Otherwise the server's clock (often UTC) and the browser's can
+disagree on the date and cause a hydration mismatch.
+
+| Variable            | Used for                                 |
+| ------------------- | ---------------------------------------- |
+| `--gc-ring-1`       | Outer ring (first goal)                  |
+| `--gc-ring-2`       | Inner ring (second goal)                 |
+| `--gc-ring-1-track` | Outer ring track (default: faded ring 1) |
+| `--gc-ring-2-track` | Inner ring track (default: faded ring 2) |
 
 ## Conventions
 
