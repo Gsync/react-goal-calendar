@@ -1,6 +1,6 @@
 import { createRef, type Ref } from "react";
 import { render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { GcMonthCalendar, type GcMonthCalendarProps } from "../src";
 
 function renderCalendar(
@@ -135,5 +135,65 @@ describe("GcMonthCalendar month grid", () => {
     expect(ref.current).toBe(root);
     expect(root).toHaveClass("custom");
     expect(root).toHaveAttribute("id", "cal");
+  });
+});
+
+describe("GcMonthCalendar today and future", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("marks only today with aria-current and data-today", () => {
+    renderCalendar({ today: "2026-09-24" });
+    const today = dayCell("Thursday, September 24");
+    expect(today).toHaveAttribute("aria-current", "date");
+    expect(today).toHaveAttribute("data-today");
+    expect(document.querySelectorAll("[aria-current]")).toHaveLength(1);
+    expect(document.querySelectorAll("[data-today]")).toHaveLength(1);
+  });
+
+  it("marks days after today as future", () => {
+    renderCalendar({ today: "2026-09-24" });
+    expect(dayCell("Friday, September 25")).toHaveAttribute("data-future");
+    // The dimming is visual only, so it is also in the text.
+    expect(
+      screen.getByRole("cell", { name: "Friday, September 25, upcoming" }),
+    ).toBeInTheDocument();
+    expect(dayCell("Thursday, September 24")).not.toHaveAttribute(
+      "data-future",
+    );
+    expect(dayCell("Wednesday, September 23")).not.toHaveAttribute(
+      "data-future",
+    );
+  });
+
+  it("marks a whole later month as future and an earlier one as past", () => {
+    const { unmount } = renderCalendar({
+      today: "2026-09-24",
+      defaultMonth: "2026-10",
+    });
+    expect(document.querySelectorAll("td[data-future]")).toHaveLength(31);
+    expect(document.querySelector("[aria-current]")).toBeNull();
+    unmount();
+    renderCalendar({ today: "2026-09-24", defaultMonth: "2026-08" });
+    expect(document.querySelectorAll("td[data-future]")).toHaveLength(0);
+    expect(document.querySelector("[aria-current]")).toBeNull();
+  });
+
+  it("falls back to the local clock when today is missing or malformed", () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    // 22:00 local in America/Santiago is already the 6th in UTC; a UTC-based "today" fails here.
+    vi.setSystemTime(new Date(2026, 8, 5, 22, 0));
+    const { unmount } = renderCalendar({ today: undefined });
+    expect(dayCell("Saturday, September 5")).toHaveAttribute(
+      "aria-current",
+      "date",
+    );
+    unmount();
+    renderCalendar({ today: "2026-9-5" });
+    expect(dayCell("Saturday, September 5")).toHaveAttribute(
+      "aria-current",
+      "date",
+    );
   });
 });

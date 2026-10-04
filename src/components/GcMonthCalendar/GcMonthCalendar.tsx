@@ -75,18 +75,27 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
                   if (key === null)
                     return <td key={`pad-${i}`} className="p-0" />;
                   const date = parseDateKey(key);
+                  const isToday = key === todayKey;
+                  const isFuture = key > todayKey;
                   return (
                     <td
                       key={key}
+                      data-today={isToday || undefined}
+                      data-future={isFuture || undefined}
+                      aria-current={isToday ? "date" : undefined}
                       className="group p-0 pb-2 text-center align-top"
                     >
-                      <span className="sr-only">{fmt.date.format(date)}</span>
+                      <span className="sr-only">
+                        {fmt.date.format(date)}
+                        {isFuture && ", upcoming"}
+                      </span>
                       <div
                         aria-hidden="true"
-                        className="flex flex-col items-center gap-1"
+                        className="flex flex-col items-center gap-1 group-data-[future]:opacity-50"
                       >
-                        <span className="inline-flex flex-col items-center text-sm tabular-nums text-gc-muted-fg">
+                        <span className="inline-flex flex-col items-center text-sm tabular-nums text-gc-muted-fg group-data-[today]:font-bold group-data-[today]:text-gc-fg">
                           {fmt.day.format(date)}
+                          <span className="hidden h-0.5 w-full rounded-full bg-gc-primary group-data-[today]:block" />
                         </span>
                       </div>
                     </td>
