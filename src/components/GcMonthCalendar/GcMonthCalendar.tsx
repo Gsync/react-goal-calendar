@@ -7,6 +7,7 @@ import {
   parseDateKey,
   toDateKey,
 } from "./dates";
+import { DayRings } from "./DayRings";
 import { dayLabel, weekdayNames } from "./format";
 import { dayProgress } from "./progress";
 import type { GcGoal, GcMonthCalendarProps } from "./types";
@@ -112,10 +113,19 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
                         aria-hidden="true"
                         className="flex flex-col items-center gap-1 group-data-[future]:opacity-50"
                       >
-                        <span className="inline-flex flex-col items-center text-sm tabular-nums text-gc-muted-fg group-data-[today]:font-bold group-data-[today]:text-gc-fg">
+                        <span className="inline-flex flex-col items-center text-sm tabular-nums text-gc-muted-fg group-data-[complete]:font-bold group-data-[complete]:text-gc-fg group-data-[today]:font-bold group-data-[today]:text-gc-fg">
                           {fmt.day.format(date)}
                           <span className="hidden h-0.5 w-full rounded-full bg-gc-primary group-data-[today]:block" />
                         </span>
+                        {shownGoals.length > 0 && (
+                          <DayRings
+                            fractions={
+                              progress
+                                ? progress.rings.map((ring) => ring.fraction)
+                                : shownGoals.map(() => 0)
+                            }
+                          />
+                        )}
                       </div>
                     </td>
                   );

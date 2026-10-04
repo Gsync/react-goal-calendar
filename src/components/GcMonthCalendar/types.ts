@@ -43,5 +43,8 @@ interface GcMonthCalendarOwnProps {
   className?: string;
 }
 
-export type GcMonthCalendarProps = GcMonthCalendarOwnProps &
-  Omit<ComponentPropsWithoutRef<"div">, keyof GcMonthCalendarOwnProps>;
+// An interface, not an intersection alias, so the emitted .d.ts names it instead of expanding it.
+export interface GcMonthCalendarProps
+  extends
+    GcMonthCalendarOwnProps,
+    Omit<ComponentPropsWithoutRef<"div">, keyof GcMonthCalendarOwnProps> {}

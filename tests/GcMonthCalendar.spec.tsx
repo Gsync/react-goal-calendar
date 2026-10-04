@@ -348,3 +348,50 @@ describe("GcMonthCalendar goal progress", () => {
     expect(dayCell("Tuesday, September 1")).toHaveAttribute("data-complete");
   });
 });
+
+describe("GcMonthCalendar rings", () => {
+  const svg = (date: string) => dayCell(date).querySelector("svg");
+  const circles = (date: string) => dayCell(date).querySelectorAll("circle");
+  // Tracks have no dash array; only progress arcs do.
+  const arcs = (date: string) => [
+    ...dayCell(date).querySelectorAll("circle[stroke-dasharray]"),
+  ];
+
+  it("draws decorative rings hidden from assistive tech", () => {
+    renderCalendar();
+    expect(svg("Tuesday, September 1")).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("draws a track per goal and an arc only for goals with progress", () => {
+    renderCalendar({ values: { "2026-09-01": { jobs: 2 } } });
+    expect(circles("Tuesday, September 1")).toHaveLength(3);
+    expect(arcs("Tuesday, September 1")).toHaveLength(1);
+    expect(arcs("Monday, September 7")).toHaveLength(0);
+  });
+
+  it("draws a full arc for values above target", () => {
+    renderCalendar({
+      values: { "2026-09-01": { jobs: 3 }, "2026-09-02": { jobs: 6 } },
+    });
+    const [full] = arcs("Tuesday, September 1");
+    const [over] = arcs("Wednesday, September 2");
+    expect(full).toBeDefined();
+    expect(over?.getAttribute("stroke-dasharray")).toBe(
+      full?.getAttribute("stroke-dasharray"),
+    );
+  });
+
+  it("draws empty tracks on future days whatever the values say", () => {
+    renderCalendar({ values: { "2026-09-25": { jobs: 3, activity: 2 } } });
+    expect(circles("Friday, September 25")).toHaveLength(2);
+    expect(arcs("Friday, September 25")).toHaveLength(0);
+  });
+
+  it("draws one ring for one goal and none without goals", () => {
+    const { unmount } = renderCalendar({ goals: [GOALS[0]] });
+    expect(circles("Tuesday, September 1")).toHaveLength(1);
+    unmount();
+    renderCalendar({ goals: [] as unknown as GcMonthCalendarProps["goals"] });
+    expect(svg("Tuesday, September 1")).toBeNull();
+  });
+});

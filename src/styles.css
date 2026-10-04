@@ -25,6 +25,26 @@
   --color-gc-border: var(--gc-border, var(--gc-default-border));
   --color-gc-primary: var(--gc-primary, var(--gc-default-primary));
   --color-gc-card: var(--gc-card, var(--gc-default-card));
+  --color-gc-ring-1: var(--gc-ring-1, var(--gc-default-ring-1));
+  --color-gc-ring-2: var(--gc-ring-2, var(--gc-default-ring-2));
+  /* Tracks fade the ring colour into the card. The whole chain is inlined so a ring or card
+   * override on any ancestor also updates the track. */
+  --color-gc-ring-1-track: var(
+    --gc-ring-1-track,
+    color-mix(
+      in oklab,
+      var(--gc-ring-1, var(--gc-default-ring-1)) 25%,
+      var(--gc-card, var(--gc-default-card))
+    )
+  );
+  --color-gc-ring-2-track: var(
+    --gc-ring-2-track,
+    color-mix(
+      in oklab,
+      var(--gc-ring-2, var(--gc-default-ring-2)) 25%,
+      var(--gc-card, var(--gc-default-card))
+    )
+  );
 }
 
 @layer theme {
@@ -35,6 +55,8 @@
     --gc-default-border: var(--color-slate-200);
     --gc-default-primary: var(--color-blue-600);
     --gc-default-card: var(--color-white);
+    --gc-default-ring-1: var(--color-blue-600);
+    --gc-default-ring-2: var(--color-teal-500);
   }
 
   .dark,
@@ -45,6 +67,8 @@
     --gc-default-border: var(--color-slate-800);
     --gc-default-primary: var(--color-blue-500);
     --gc-default-card: var(--color-slate-950);
+    --gc-default-ring-1: var(--color-blue-500);
+    --gc-default-ring-2: var(--color-teal-400);
   }
 
   /* Opt-in OS dark mode. Not automatic: an app whose light mode just removes
@@ -58,6 +82,8 @@
       --gc-default-border: var(--color-slate-800);
       --gc-default-primary: var(--color-blue-500);
       --gc-default-card: var(--color-slate-950);
+      --gc-default-ring-1: var(--color-blue-500);
+      --gc-default-ring-2: var(--color-teal-400);
     }
   }
 }
