@@ -96,7 +96,7 @@ Other `<div>` props pass through to the root, and `ref` points at it.
 - A target of 0 is always met. Missing, negative or non-numeric amounts count as 0.
 - Days after `today` are dimmed and show empty rings, even if `values` has entries for them. Their
   accessible text ends in ", upcoming".
-- Each day's accessible text reads like "Tuesday, September 1: Jobs 3 of 3, Activity 1.5 of 2 h.
+- Each day's accessible text reads like "Tuesday, September 1: Jobs 3 of 3, Activity 2 of 2 h.
   All goals met." (English in this version; dates and numbers follow `locale`).
 
 Each day `<td>` carries these attributes when they apply, for styling or tests: `data-today` (also
