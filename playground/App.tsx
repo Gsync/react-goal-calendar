@@ -2,16 +2,16 @@ import { useState, type CSSProperties } from "react";
 import { GcMonthCalendar, type GcGoal } from "../src";
 
 const GOALS: [GcGoal, GcGoal] = [
-  { id: "jobs", label: "Jobs", target: 3 },
-  { id: "activity", label: "Activity", target: 2, unit: "h" },
+  { id: "calls", label: "Calls", target: 20 },
+  { id: "emails", label: "Emails", target: 10 },
 ];
 
 // Deterministic sample data for September 2026 up to "today", the 24th.
 const VALUES: Record<string, Record<string, number>> = {};
 for (let day = 1; day <= 24; day++) {
   VALUES[`2026-09-${String(day).padStart(2, "0")}`] = {
-    jobs: day >= 14 && day <= 23 ? 3 : (day * 7) % 5,
-    activity: day >= 14 && day <= 23 ? 2.5 : ((day * 3) % 6) / 2,
+    calls: day >= 14 && day <= 23 ? 22 : ((day * 7) % 5) * 7,
+    emails: day >= 14 && day <= 23 ? 12 : (day % 2) * 8,
   };
 }
 

@@ -59,15 +59,15 @@ and next month buttons.
 import { GcMonthCalendar, type GcGoal } from "react-goal-calendar";
 
 const goals: [GcGoal, GcGoal] = [
-  { id: "jobs", label: "Jobs", target: 3 },
-  { id: "activity", label: "Activity", target: 2, unit: "h" },
+  { id: "calls", label: "Calls", target: 20 },
+  { id: "emails", label: "Emails", target: 10 },
 ];
 
 <GcMonthCalendar
   goals={goals}
   values={{
-    "2026-09-01": { jobs: 3, activity: 1.5 },
-    "2026-09-02": { jobs: 1 },
+    "2026-09-01": { calls: 20, emails: 10 },
+    "2026-09-02": { calls: 8 },
   }}
   today="2026-09-24"
 />;
@@ -92,11 +92,11 @@ Other `<div>` props pass through to the root, and `ref` points at it.
 `GcGoal` is `{ id: string; label: string; target: number; unit?: string }`.
 
 - A ring shows `done / target` and is full once the target is reached. The accessible text keeps the
-  real amount ("Jobs 5 of 3").
+  real amount ("Calls 25 of 20").
 - A target of 0 is always met. Missing, negative or non-numeric amounts count as 0.
 - Days after `today` are dimmed and show empty rings, even if `values` has entries for them. Their
   accessible text ends in ", upcoming".
-- Each day's accessible text reads like "Tuesday, September 1: Jobs 3 of 3, Activity 2 of 2 h.
+- Each day's accessible text reads like "Tuesday, September 1: Calls 20 of 20, Emails 10 of 10.
   All goals met." (English in this version; dates and numbers follow `locale`).
 
 Each day `<td>` carries these attributes when they apply, for styling or tests: `data-today` (also

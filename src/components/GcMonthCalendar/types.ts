@@ -4,7 +4,7 @@ import type { ComponentPropsWithoutRef } from "react";
 export interface GcGoal {
   /** Key for this goal's daily amounts in `values`. */
   id: string;
-  /** Name used in the accessible text, e.g. "Jobs". */
+  /** Name used in the accessible text, e.g. "Calls". */
   label: string;
   /** Amount to reach each day. 0 means the goal is always met. */
   target: number;
@@ -15,12 +15,12 @@ export interface GcGoal {
 interface GcMonthCalendarOwnProps {
   /**
    * One or two goals. The first is the outer ring, the second the inner ring.
-   * @example [{ id: "jobs", label: "Jobs", target: 3 }, { id: "activity", label: "Activity", target: 2, unit: "h" }]
+   * @example [{ id: "calls", label: "Calls", target: 20 }, { id: "emails", label: "Emails", target: 10 }]
    */
   goals: readonly [GcGoal] | readonly [GcGoal, GcGoal];
   /**
    * Amounts per day, keyed by `YYYY-MM-DD` and then by goal `id`. Missing entries count as 0.
-   * @example { "2026-09-01": { jobs: 3, activity: 1.5 } }
+   * @example { "2026-09-01": { calls: 20, emails: 10 } }
    */
   values?: Readonly<Record<string, Readonly<Record<string, number>>>>;
   /**
