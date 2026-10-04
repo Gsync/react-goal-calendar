@@ -20,5 +20,6 @@ jobs:
       - run: npm test
       - run: npm run test:tz
       - run: npm run build
+      - run: npm run check:dist
       - run: npx publint
       - run: npx attw --pack . --profile esm-only --exclude-entrypoints style.css

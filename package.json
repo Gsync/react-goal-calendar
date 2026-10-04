@@ -24,13 +24,14 @@
   "scripts": {
     "dev": "vite playground",
     "build": "vite build",
+    "check:dist": "node scripts/check-dist.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:tz": "TZ=America/Santiago vitest run",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
-    "check": "npm run lint && npm run typecheck && npm run test && npm run test:tz && npm run build && publint && attw --pack . --profile esm-only --exclude-entrypoints style.css",
+    "check": "npm run lint && npm run typecheck && npm run test && npm run test:tz && npm run build && npm run check:dist && publint && attw --pack . --profile esm-only --exclude-entrypoints style.css",
     "changeset": "changeset",
     "prepublishOnly": "npm run check && npm run build"
   },
