@@ -1,5 +1,6 @@
 import { createRef, type Ref } from "react";
 import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   GcMonthCalendar,
@@ -415,5 +416,74 @@ describe("GcMonthCalendar rings", () => {
     unmount();
     renderCalendar({ goals: [] as unknown as GcMonthCalendarProps["goals"] });
     expect(svg("Tuesday, September 1")).toBeNull();
+  });
+});
+
+describe("GcMonthCalendar navigation", () => {
+  it("moves to the next and previous month and reports it", async () => {
+    const user = userEvent.setup();
+    const onMonthChange = vi.fn();
+    renderCalendar({ onMonthChange });
+    await user.click(screen.getByRole("button", { name: "Next month" }));
+    expect(screen.getByRole("status")).toHaveTextContent("Oct 2026");
+    expect(weekRows()[0]).toEqual(["", "", "", "1", "2", "3", "4"]);
+    expect(onMonthChange).toHaveBeenLastCalledWith("2026-10");
+    await user.click(screen.getByRole("button", { name: "Previous month" }));
+    await user.click(screen.getByRole("button", { name: "Previous month" }));
+    expect(screen.getByRole("status")).toHaveTextContent("Aug 2026");
+    expect(onMonthChange).toHaveBeenLastCalledWith("2026-08");
+    expect(onMonthChange).toHaveBeenCalledTimes(3);
+  });
+
+  it("crosses year boundaries", async () => {
+    const user = userEvent.setup();
+    const onMonthChange = vi.fn();
+    renderCalendar({ defaultMonth: "2026-12", onMonthChange });
+    await user.click(screen.getByRole("button", { name: "Next month" }));
+    expect(screen.getByRole("status")).toHaveTextContent("Jan 2027");
+    expect(onMonthChange).toHaveBeenLastCalledWith("2027-01");
+    await user.click(screen.getByRole("button", { name: "Previous month" }));
+    await user.click(screen.getByRole("button", { name: "Previous month" }));
+    expect(screen.getByRole("status")).toHaveTextContent("Nov 2026");
+    expect(onMonthChange).toHaveBeenLastCalledWith("2026-11");
+  });
+
+  it("keeps today marked after navigating away and back", async () => {
+    const user = userEvent.setup();
+    renderCalendar();
+    await user.click(screen.getByRole("button", { name: "Next month" }));
+    expect(document.querySelector("[aria-current]")).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Previous month" }));
+    expect(dayCell("Thursday, September 24")).toHaveAttribute(
+      "aria-current",
+      "date",
+    );
+  });
+
+  it("has only the two arrows as tab stops", async () => {
+    const user = userEvent.setup();
+    renderCalendar();
+    await user.tab();
+    expect(
+      screen.getByRole("button", { name: "Previous month" }),
+    ).toHaveFocus();
+    await user.tab();
+    expect(screen.getByRole("button", { name: "Next month" })).toHaveFocus();
+    await user.tab();
+    expect(document.body).toHaveFocus();
+  });
+
+  // Already true since Phase 1 (uncontrolled); pinned so a refactor can't break it.
+  it("keeps the shown month when defaultMonth changes after mount", () => {
+    const { rerender } = renderCalendar({ defaultMonth: "2026-09" });
+    rerender(
+      <GcMonthCalendar
+        goals={GOALS}
+        today="2026-09-24"
+        locale="en-US"
+        defaultMonth="2027-01"
+      />,
+    );
+    expect(screen.getByRole("status")).toHaveTextContent("Sep 2026");
   });
 });

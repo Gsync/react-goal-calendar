@@ -1,6 +1,7 @@
 import { forwardRef, useId, useMemo, useState } from "react";
 import { cn } from "../../lib/cn";
 import {
+  addMonths,
   isDateKey,
   isMonthKey,
   monthWeeks,
@@ -15,6 +16,29 @@ import type { GcGoal, GcMonthCalendarProps } from "./types";
 const ROOT =
   "box-border rounded-xl border border-gc-border bg-gc-card p-4 text-gc-fg";
 
+const NAV_BUTTON =
+  "inline-flex size-8 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-0 text-gc-muted-fg hover:bg-gc-muted hover:text-gc-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gc-primary";
+
+// Mirrored under dir="rtl" so "previous" still points toward the start.
+function Chevron({ d }: { d: string }) {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      aria-hidden="true"
+      className="size-4 rtl:-scale-x-100"
+    >
+      <path
+        d={d}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
   function GcMonthCalendar(
     {
@@ -22,6 +46,7 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
       values,
       today,
       defaultMonth,
+      onMonthChange,
       locale = "en-US",
       className,
       ...rest
@@ -38,9 +63,14 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
           .filter((goal: unknown) => typeof goal === "object" && goal !== null)
           .slice(0, 2)
       : [];
-    const [month] = useState(() =>
+    const [month, setMonth] = useState(() =>
       isMonthKey(defaultMonth) ? defaultMonth : todayKey.slice(0, 7),
     );
+
+    function showMonth(next: string) {
+      setMonth(next);
+      onMonthChange?.(next);
+    }
     const titleId = useId();
     const fmt = useMemo(
       () => ({
@@ -65,6 +95,24 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
         <div className="flex items-center justify-between gap-2">
           <div id={titleId} role="status" className="text-lg font-semibold">
             {fmt.title.format(parseDateKey(`${month}-01`))}
+          </div>
+          <div className="flex gap-1">
+            <button
+              type="button"
+              aria-label="Previous month"
+              onClick={() => showMonth(addMonths(month, -1))}
+              className={NAV_BUTTON}
+            >
+              <Chevron d="M10 3 5 8l5 5" />
+            </button>
+            <button
+              type="button"
+              aria-label="Next month"
+              onClick={() => showMonth(addMonths(month, 1))}
+              className={NAV_BUTTON}
+            >
+              <Chevron d="m6 3 5 5-5 5" />
+            </button>
           </div>
         </div>
         <table

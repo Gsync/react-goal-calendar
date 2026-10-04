@@ -49,3 +49,10 @@ export function monthWeeks(month: string): (string | null)[][] {
   for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
   return weeks;
 }
+
+export function addMonths(month: string, n: number): string {
+  const date = parseDateKey(`${month}-01`);
+  // Day 1 never overflows into the following month.
+  date.setMonth(date.getMonth() + n);
+  return toDateKey(date).slice(0, 7);
+}

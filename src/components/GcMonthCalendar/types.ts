@@ -34,6 +34,8 @@ interface GcMonthCalendarOwnProps {
    * @defaultValue the month of `today`
    */
   defaultMonth?: string;
+  /** Called with the new month (`YYYY-MM`) when the user navigates. */
+  onMonthChange?: (month: string) => void;
   /**
    * BCP 47 locale for the month title, weekday names and numbers.
    * @defaultValue "en-US"
