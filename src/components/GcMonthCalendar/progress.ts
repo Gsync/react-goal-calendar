@@ -14,9 +14,10 @@ export interface DayProgress {
 }
 
 // Values come from untyped consumer data; anything but a positive finite number counts as 0.
+// Rounded to the 2 decimals the label shows, so a float sum like 0.7 + 0.2 + 0.1 meets 1.
 function amount(value: unknown): number {
   return typeof value === "number" && Number.isFinite(value) && value > 0
-    ? value
+    ? Math.round(value * 100) / 100
     : 0;
 }
 

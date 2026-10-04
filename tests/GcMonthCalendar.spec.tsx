@@ -335,6 +335,28 @@ describe("GcMonthCalendar goal progress", () => {
     ).toBeInTheDocument();
   });
 
+  it("counts a float sum that rounds to the target as met", () => {
+    renderCalendar({
+      goals: [{ id: "activity", label: "Activity", target: 1, unit: "h" }],
+      values: { "2026-09-01": { activity: 0.7 + 0.2 + 0.1 } },
+    });
+    const cell = screen.getByRole("cell", {
+      name: "Tuesday, September 1: Activity 1 of 1 h. All goals met.",
+    });
+    expect(cell).toHaveAttribute("data-complete");
+  });
+
+  it("skips goal entries that are not goal objects", () => {
+    renderCalendar({
+      goals: [null, GOALS[0]] as unknown as GcMonthCalendarProps["goals"],
+    });
+    expect(
+      screen.getByRole("cell", {
+        name: "Tuesday, September 1: Jobs 0 of 3",
+      }),
+    ).toBeInTheDocument();
+  });
+
   it("updates when values change after mount", () => {
     const { rerender } = renderCalendar({ values: {} });
     rerender(

@@ -34,7 +34,9 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
     const todayKey = isDateKey(today) ? today : clockToday;
     // Plain JS callers may pass anything here; draw at most two rings.
     const shownGoals: readonly GcGoal[] = Array.isArray(goals)
-      ? goals.slice(0, 2)
+      ? goals
+          .filter((goal: unknown) => typeof goal === "object" && goal !== null)
+          .slice(0, 2)
       : [];
     const [month] = useState(() =>
       isMonthKey(defaultMonth) ? defaultMonth : todayKey.slice(0, 7),
