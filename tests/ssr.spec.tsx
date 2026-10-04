@@ -18,5 +18,6 @@ describe("server rendering", () => {
     expect(html).toContain("Sep 2026");
     expect(html).toContain('aria-current="date"');
     expect(html).toContain("Tuesday, September 1: Jobs 3 of 3. All goals met.");
+    expect(html).not.toContain("data-gc-tooltip");
   });
 });

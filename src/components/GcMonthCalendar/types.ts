@@ -1,4 +1,4 @@
-import type { ComponentPropsWithoutRef } from "react";
+import type { ComponentPropsWithoutRef, ReactNode } from "react";
 
 /** A daily goal, drawn as one ring on each day. */
 export interface GcGoal {
@@ -10,6 +10,25 @@ export interface GcGoal {
   target: number;
   /** Unit appended to amounts in the accessible text, e.g. "h". */
   unit?: string;
+}
+
+/** One day's data, as passed to `renderTooltip`. */
+export interface GcDayInfo {
+  /** The day as `YYYY-MM-DD`. */
+  date: string;
+  /** The day is `today`. */
+  today: boolean;
+  /** The day is after `today`. Its rings draw empty, but `goals` still holds its `values`. */
+  future: boolean;
+  /** Every goal reached its target, judged from `values` (also for future days). */
+  complete: boolean;
+  /** Progress per goal, outer ring first. `fraction` is `done / target`, capped at 1. */
+  goals: readonly {
+    goal: GcGoal;
+    done: number;
+    target: number;
+    fraction: number;
+  }[];
 }
 
 interface GcMonthCalendarOwnProps {
@@ -45,6 +64,14 @@ interface GcMonthCalendarOwnProps {
    * @defaultValue "en-US"
    */
   locale?: string;
+  /**
+   * Content of the tooltip shown while the mouse is over a day. Return `null` to show none for that
+   * day, or pass `null` to turn tooltips off. The tooltip opens for mouse pointers only, closes on
+   * Escape and is hidden from assistive tech, so don't put information only there.
+   * @example renderTooltip={(day) => (day.future ? null : `${day.goals[0]?.done ?? 0} calls`)}
+   * @defaultValue the date and each goal's `done / target`, on past days and today
+   */
+  renderTooltip?: ((day: GcDayInfo) => ReactNode) | null;
   /** Classes merged last onto the root element. */
   className?: string;
 }

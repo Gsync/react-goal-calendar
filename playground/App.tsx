@@ -77,6 +77,33 @@ export function App() {
             style={card}
           />
         </div>
+
+        <h3>Custom tooltip (percent of target)</h3>
+        <GcMonthCalendar
+          goals={GOALS}
+          values={VALUES}
+          today="2026-09-24"
+          style={card}
+          renderTooltip={(day) =>
+            day.future
+              ? null
+              : day.goals
+                  .map(
+                    ({ goal, fraction }) =>
+                      `${goal.label} ${Math.round(fraction * 100)}%`,
+                  )
+                  .join(" · ")
+          }
+        />
+
+        <h3>Tooltips off</h3>
+        <GcMonthCalendar
+          goals={GOALS}
+          values={VALUES}
+          today="2026-09-24"
+          style={card}
+          renderTooltip={null}
+        />
       </section>
     </main>
   );

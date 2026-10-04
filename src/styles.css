@@ -45,6 +45,15 @@
       var(--gc-card, var(--gc-default-card))
     )
   );
+  /* The tooltip box defaults to the card colours; the chain is inlined like the tracks above. */
+  --color-gc-tooltip-bg: var(
+    --gc-tooltip-bg,
+    var(--gc-card, var(--gc-default-card))
+  );
+  --color-gc-tooltip-fg: var(
+    --gc-tooltip-fg,
+    var(--gc-fg, var(--gc-default-fg))
+  );
 }
 
 @layer theme {

@@ -1,4 +1,4 @@
-import { forwardRef, useId, useMemo, useState } from "react";
+import { forwardRef, useId, useMemo, useState, type ReactNode } from "react";
 import { cn } from "../../lib/cn";
 import {
   addMonths,
@@ -11,11 +11,12 @@ import {
 } from "./dates";
 import { DayRings } from "./DayRings";
 import { dayLabel, weekdayNames } from "./format";
-import { dayProgress } from "./progress";
-import type { GcGoal, GcMonthCalendarProps } from "./types";
+import { DayTooltip, DefaultTooltip } from "./DayTooltip";
+import { dayInfo, dayProgress } from "./progress";
+import type { GcDayInfo, GcGoal, GcMonthCalendarProps } from "./types";
 
 const ROOT =
-  "box-border rounded-xl border border-gc-border bg-gc-card p-4 text-gc-fg";
+  "relative box-border rounded-xl border border-gc-border bg-gc-card p-4 text-gc-fg";
 
 const NAV_BUTTON =
   "inline-flex size-8 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-0 text-gc-muted-fg hover:bg-gc-muted hover:text-gc-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gc-primary aria-disabled:cursor-not-allowed aria-disabled:opacity-40 aria-disabled:hover:bg-transparent aria-disabled:hover:text-gc-muted-fg";
@@ -40,6 +41,17 @@ function Chevron({ d }: { d: string }) {
   );
 }
 
+// These render nothing, so they mean "no tooltip" rather than an empty box.
+function hasContent(node: ReactNode): boolean {
+  if (Array.isArray(node)) return node.length > 0;
+  return (
+    node !== null &&
+    node !== undefined &&
+    typeof node !== "boolean" &&
+    node !== ""
+  );
+}
+
 export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
   function GcMonthCalendar(
     {
@@ -51,6 +63,7 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
       maxMonth,
       onMonthChange,
       locale = "en-US",
+      renderTooltip,
       className,
       ...rest
     },
@@ -76,7 +89,14 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
     const canGoBack = !isMonthKey(minMonth) || month > minMonth;
     const canGoForward = !isMonthKey(maxMonth) || month < maxMonth;
 
+    const [hover, setHover] = useState<{
+      key: string;
+      cell: HTMLElement;
+    } | null>(null);
+
     function showMonth(next: string) {
+      // The hovered cell unmounts without a pointerleave when the keyboard changes the month.
+      setHover(null);
       setMonth(next);
       onMonthChange?.(next);
     }
@@ -98,6 +118,26 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
       }),
       [locale],
     );
+    // Future rings are empty, so by default there is nothing to show for them.
+    function defaultTooltip(day: GcDayInfo): ReactNode {
+      if (day.future || day.goals.length === 0) return null;
+      return (
+        <DefaultTooltip
+          day={day}
+          dateText={fmt.date.format(parseDateKey(day.date))}
+          number={fmt.number}
+        />
+      );
+    }
+    const tooltipFor =
+      renderTooltip === undefined ? defaultTooltip : renderTooltip;
+    const tooltip =
+      hover && tooltipFor
+        ? tooltipFor(
+            dayInfo(hover.key, todayKey, shownGoals, values?.[hover.key]),
+          )
+        : null;
+    const tooltipKey = hasContent(tooltip) ? hover?.key : undefined;
 
     return (
       <div {...rest} ref={ref} className={cn(ROOT, className)}>
@@ -168,15 +208,25 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
                       data-future={isFuture || undefined}
                       data-complete={progress?.complete || undefined}
                       data-empty={progress?.empty || undefined}
+                      data-hovered={key === tooltipKey || undefined}
                       aria-current={isToday ? "date" : undefined}
-                      className="group p-0 pb-2 text-center align-top"
+                      onPointerEnter={(event) => {
+                        if (event.pointerType === "mouse")
+                          setHover({ key, cell: event.currentTarget });
+                      }}
+                      onPointerLeave={() =>
+                        setHover((current) =>
+                          current?.key === key ? null : current,
+                        )
+                      }
+                      className="group p-0 text-center align-top"
                     >
                       <span className="sr-only">
                         {dayLabel(fmt.date.format(date), progress, fmt.number)}
                       </span>
                       <div
                         aria-hidden="true"
-                        className="flex flex-col items-center gap-1 group-data-[future]:opacity-50"
+                        className="flex flex-col items-center gap-1 rounded-lg py-1 group-data-[future]:opacity-50 group-data-[hovered]:bg-gc-muted"
                       >
                         <span className="inline-flex flex-col items-center text-sm tabular-nums text-gc-muted-fg group-data-[complete]:font-bold group-data-[complete]:text-gc-fg group-data-[today]:font-bold group-data-[today]:text-gc-fg">
                           {fmt.day.format(date)}
@@ -199,6 +249,11 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
             ))}
           </tbody>
         </table>
+        {hover && tooltipKey !== undefined && (
+          <DayTooltip anchor={hover.cell} onDismiss={() => setHover(null)}>
+            {tooltip}
+          </DayTooltip>
+        )}
       </div>
     );
   },

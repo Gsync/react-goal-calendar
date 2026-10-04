@@ -15,7 +15,7 @@ for (const name of ["GcMonthCalendar"]) {
   if (!mod[name]) failures.push(`dist/index.js does not export ${name}`);
 }
 
-for (const name of ["GcMonthCalendarProps", "GcGoal"]) {
+for (const name of ["GcMonthCalendarProps", "GcGoal", "GcDayInfo"]) {
   if (!new RegExp(`\\b${name}\\b`).test(dts)) {
     failures.push(`dist/index.d.ts does not declare ${name}`);
   }
@@ -25,6 +25,7 @@ for (const token of [
   "--gc-default-primary",
   "--gc-default-ring-1",
   ".stroke-gc-ring-1",
+  ".bg-gc-tooltip-bg",
 ]) {
   if (!css.includes(token)) failures.push(`dist/style.css is missing ${token}`);
 }

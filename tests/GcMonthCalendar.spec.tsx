@@ -1,9 +1,10 @@
-import { createRef, type Ref } from "react";
+import { createRef, type ReactNode, type Ref } from "react";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   GcMonthCalendar,
+  type GcDayInfo,
   type GcGoal,
   type GcMonthCalendarProps,
 } from "../src";
@@ -526,5 +527,209 @@ describe("GcMonthCalendar month bounds", () => {
     expect(
       screen.getByRole("button", { name: "Next month" }),
     ).not.toHaveAttribute("aria-disabled");
+  });
+});
+
+describe("GcMonthCalendar tooltip", () => {
+  // The box is aria-hidden, so it has no role; data-gc-tooltip is its documented hook.
+  const tooltip = () =>
+    document.querySelector<HTMLElement>("[data-gc-tooltip]");
+  const rows = () =>
+    within(tooltip() as HTMLElement).getAllByRole("listitem", {
+      hidden: true,
+    });
+  const VALUES = {
+    "2026-09-01": { jobs: 2, activity: 1.5 },
+    "2026-09-02": { jobs: 3, activity: 1 },
+  };
+
+  it("shows the date and each goal's progress while the mouse is over a day", async () => {
+    const user = userEvent.setup();
+    renderCalendar({ values: VALUES });
+    expect(tooltip()).toBeNull();
+    await user.hover(dayCell("Tuesday, September 1"));
+    expect(tooltip()).toHaveAttribute("aria-hidden", "true");
+    expect(tooltip()).toHaveTextContent("Tuesday, September 1");
+    expect(rows()).toHaveLength(2);
+    expect(rows()[0]).toHaveTextContent("Jobs2 / 3");
+    expect(rows()[1]).toHaveTextContent("Activity1.5 / 2 h");
+    expect(tooltip()).not.toHaveTextContent("✓");
+  });
+
+  it("ticks goals that reached their target", async () => {
+    const user = userEvent.setup();
+    renderCalendar({ values: VALUES });
+    await user.hover(dayCell("Wednesday, September 2"));
+    expect(rows()[0]).toHaveTextContent("✓");
+    expect(rows()[1]).not.toHaveTextContent("✓");
+  });
+
+  it("marks the hovered day, follows the mouse and hides when it leaves", async () => {
+    const user = userEvent.setup();
+    renderCalendar({ values: VALUES });
+    await user.hover(dayCell("Tuesday, September 1"));
+    expect(dayCell("Tuesday, September 1")).toHaveAttribute("data-hovered");
+    await user.hover(dayCell("Wednesday, September 2"));
+    expect(document.querySelectorAll("[data-gc-tooltip]")).toHaveLength(1);
+    expect(tooltip()).toHaveTextContent("Wednesday, September 2");
+    expect(dayCell("Tuesday, September 1")).not.toHaveAttribute("data-hovered");
+    expect(dayCell("Wednesday, September 2")).toHaveAttribute("data-hovered");
+    await user.unhover(dayCell("Wednesday, September 2"));
+    expect(tooltip()).toBeNull();
+    expect(dayCell("Wednesday, September 2")).not.toHaveAttribute(
+      "data-hovered",
+    );
+  });
+
+  it("shows today but not future days or padding cells", async () => {
+    const user = userEvent.setup();
+    renderCalendar({ values: { "2026-09-25": { jobs: 3 } } });
+    await user.hover(dayCell("Thursday, September 24"));
+    expect(tooltip()).toHaveTextContent("Thursday, September 24");
+    await user.hover(dayCell("Friday, September 25"));
+    expect(tooltip()).toBeNull();
+    expect(dayCell("Friday, September 25")).not.toHaveAttribute("data-hovered");
+    const [, firstWeek] = screen.getAllByRole("row");
+    const [padding] = within(firstWeek as HTMLElement).getAllByRole("cell");
+    await user.hover(padding as HTMLElement);
+    expect(tooltip()).toBeNull();
+  });
+
+  it("shows nothing without goals", async () => {
+    const user = userEvent.setup();
+    renderCalendar({ goals: [] as unknown as GcMonthCalendarProps["goals"] });
+    await user.hover(dayCell("Tuesday, September 1"));
+    expect(tooltip()).toBeNull();
+  });
+
+  it("ignores touch pointers", async () => {
+    const user = userEvent.setup();
+    renderCalendar({ values: VALUES });
+    await user.pointer({
+      keys: "[TouchA>]",
+      target: dayCell("Tuesday, September 1"),
+    });
+    expect(tooltip()).toBeNull();
+  });
+
+  it("hides on Escape while the mouse stays on the day", async () => {
+    const user = userEvent.setup();
+    renderCalendar({ values: VALUES });
+    await user.hover(dayCell("Tuesday, September 1"));
+    await user.keyboard("{Escape}");
+    expect(tooltip()).toBeNull();
+    expect(dayCell("Tuesday, September 1")).not.toHaveAttribute("data-hovered");
+  });
+
+  it("closes when the month changes under the mouse", async () => {
+    const user = userEvent.setup();
+    renderCalendar({ values: VALUES });
+    await user.hover(dayCell("Tuesday, September 1"));
+    screen.getByRole("button", { name: "Next month" }).focus();
+    await user.keyboard("{Enter}");
+    expect(screen.getByRole("status")).toHaveTextContent("Oct 2026");
+    expect(tooltip()).toBeNull();
+  });
+
+  it("updates the open tooltip when values change", async () => {
+    const user = userEvent.setup();
+    const { rerender } = renderCalendar({
+      values: { "2026-09-01": { jobs: 1 } },
+    });
+    await user.hover(dayCell("Tuesday, September 1"));
+    expect(rows()[0]).toHaveTextContent("Jobs1 / 3");
+    rerender(
+      <GcMonthCalendar
+        goals={GOALS}
+        values={{ "2026-09-01": { jobs: 3 } }}
+        today="2026-09-24"
+        locale="en-US"
+      />,
+    );
+    expect(rows()[0]).toHaveTextContent("Jobs3 / 3✓");
+  });
+
+  it("shows renderTooltip's content and passes it the day's data", async () => {
+    const user = userEvent.setup();
+    const renderTooltip = vi.fn((day: GcDayInfo) => `Tip for ${day.date}`);
+    renderCalendar({ values: VALUES, renderTooltip });
+    await user.hover(dayCell("Tuesday, September 1"));
+    expect(tooltip()).toHaveTextContent(/^Tip for 2026-09-01$/);
+    expect(tooltip()).toHaveAttribute("aria-hidden", "true");
+    expect(dayCell("Tuesday, September 1")).toHaveAttribute("data-hovered");
+    expect(renderTooltip).toHaveBeenLastCalledWith({
+      date: "2026-09-01",
+      today: false,
+      future: false,
+      complete: false,
+      goals: [
+        { goal: GOALS[0], done: 2, target: 3, fraction: 2 / 3 },
+        { goal: GOALS[1], done: 1.5, target: 2, fraction: 0.75 },
+      ],
+    });
+  });
+
+  it("passes today and future days with their real values", async () => {
+    const user = userEvent.setup();
+    const renderTooltip = vi.fn((day: GcDayInfo) => `Tip for ${day.date}`);
+    renderCalendar({
+      values: {
+        "2026-09-24": { jobs: 3, activity: 2 },
+        "2026-09-25": { jobs: 3 },
+      },
+      renderTooltip,
+    });
+    await user.hover(dayCell("Thursday, September 24"));
+    expect(renderTooltip).toHaveBeenLastCalledWith(
+      expect.objectContaining({ today: true, future: false, complete: true }),
+    );
+    await user.hover(dayCell("Friday, September 25"));
+    expect(renderTooltip).toHaveBeenLastCalledWith({
+      date: "2026-09-25",
+      today: false,
+      future: true,
+      complete: false,
+      goals: [
+        { goal: GOALS[0], done: 3, target: 3, fraction: 1 },
+        { goal: GOALS[1], done: 0, target: 2, fraction: 0 },
+      ],
+    });
+    expect(tooltip()).toHaveTextContent("Tip for 2026-09-25");
+  });
+
+  it("shows nothing on days where renderTooltip returns nothing", async () => {
+    const user = userEvent.setup();
+    const empty: Record<string, ReactNode> = {
+      "2026-09-01": null,
+      "2026-09-02": false,
+      "2026-09-03": undefined,
+      "2026-09-04": "",
+      "2026-09-05": true,
+      "2026-09-06": [],
+    };
+    renderCalendar({
+      values: VALUES,
+      renderTooltip: (day) => empty[day.date],
+    });
+    for (const name of [
+      "Tuesday, September 1",
+      "Wednesday, September 2",
+      "Thursday, September 3",
+      "Friday, September 4",
+      "Saturday, September 5",
+      "Sunday, September 6",
+    ]) {
+      await user.hover(dayCell(name));
+      expect(tooltip()).toBeNull();
+      expect(dayCell(name)).not.toHaveAttribute("data-hovered");
+    }
+  });
+
+  it("turns tooltips off with renderTooltip={null}", async () => {
+    const user = userEvent.setup();
+    renderCalendar({ values: VALUES, renderTooltip: null });
+    await user.hover(dayCell("Tuesday, September 1"));
+    expect(tooltip()).toBeNull();
+    expect(dayCell("Tuesday, September 1")).not.toHaveAttribute("data-hovered");
   });
 });

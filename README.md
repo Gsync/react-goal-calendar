@@ -85,6 +85,7 @@ rejected because at most two rings are drawn.
 | `minMonth` / `maxMonth` | `"YYYY-MM"`                                      | unbounded          |
 | `onMonthChange`         | `(month: "YYYY-MM") => void`                     |                    |
 | `locale`                | BCP 47 string                                    | `"en-US"`          |
+| `renderTooltip`         | `(day: GcDayInfo) => ReactNode`, or `null`       | built-in summary   |
 | `className`             | `string`                                         |                    |
 
 Other `<div>` props pass through to the root, and `ref` points at it.
@@ -103,15 +104,40 @@ Each day `<td>` carries these attributes when they apply, for styling or tests: 
 `aria-current="date"`), `data-future`, `data-complete` (every goal met), `data-empty` (nothing
 recorded).
 
+**Tooltip.** While the mouse is over a past day or today, a small card shows the date and each
+goal's `done / target`, with a ✓ for met goals. Pass `renderTooltip` to change what's inside the
+card (it keeps its box and position), return `null` to show nothing for a day, or pass
+`renderTooltip={null}` to turn it off:
+
+```tsx
+<GcMonthCalendar
+  goals={goals}
+  values={values}
+  renderTooltip={(day) =>
+    day.future ? null : `${day.goals[0]?.done ?? 0} calls`
+  }
+/>
+```
+
+`GcDayInfo` is `{ date, today, future, complete, goals: { goal, done, target, fraction }[] }`. For
+future days `goals` holds the real `values`, even though their rings draw empty.
+
+The tooltip opens for mouse pointers only, closes on Escape, and is hidden from assistive tech,
+because each day's accessible text already has the same numbers. Keyboard, touch and screen-reader
+users never see it, so don't put information only there. The hovered day gets `data-hovered` and
+the card carries `data-gc-tooltip`, for styling.
+
 **Server rendering:** pass `today`. Otherwise the server's clock (often UTC) and the browser's can
 disagree on the date and cause a hydration mismatch.
 
-| Variable            | Used for                                 |
-| ------------------- | ---------------------------------------- |
-| `--gc-ring-1`       | Outer ring (first goal)                  |
-| `--gc-ring-2`       | Inner ring (second goal)                 |
-| `--gc-ring-1-track` | Outer ring track (default: faded ring 1) |
-| `--gc-ring-2-track` | Inner ring track (default: faded ring 2) |
+| Variable            | Used for                                  |
+| ------------------- | ----------------------------------------- |
+| `--gc-ring-1`       | Outer ring (first goal)                   |
+| `--gc-ring-2`       | Inner ring (second goal)                  |
+| `--gc-ring-1-track` | Outer ring track (default: faded ring 1)  |
+| `--gc-ring-2-track` | Inner ring track (default: faded ring 2)  |
+| `--gc-tooltip-bg`   | Tooltip background (default: `--gc-card`) |
+| `--gc-tooltip-fg`   | Tooltip text (default: `--gc-fg`)         |
 
 ## Conventions
 

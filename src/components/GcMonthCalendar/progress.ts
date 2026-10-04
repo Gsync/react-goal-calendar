@@ -1,4 +1,4 @@
-import type { GcGoal } from "./types";
+import type { GcDayInfo, GcGoal } from "./types";
 
 export interface RingProgress {
   goal: GcGoal;
@@ -40,5 +40,22 @@ export function dayProgress(
     rings,
     complete: rings.length > 0 && rings.every((ring) => ring.fraction >= 1),
     empty: rings.length > 0 && rings.every((ring) => ring.done === 0),
+  };
+}
+
+// Unlike the rings, uses `values` on future days too; `future` lets the tooltip decide.
+export function dayInfo(
+  date: string,
+  todayKey: string,
+  goals: readonly GcGoal[],
+  day: Readonly<Record<string, number>> | undefined,
+): GcDayInfo {
+  const { rings, complete } = dayProgress(goals, day);
+  return {
+    date,
+    today: date === todayKey,
+    future: date > todayKey,
+    complete,
+    goals: rings,
   };
 }
