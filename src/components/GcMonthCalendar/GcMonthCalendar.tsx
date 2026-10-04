@@ -7,21 +7,34 @@ import {
   parseDateKey,
   toDateKey,
 } from "./dates";
-import { weekdayNames } from "./format";
-import type { GcMonthCalendarProps } from "./types";
+import { dayLabel, weekdayNames } from "./format";
+import { dayProgress } from "./progress";
+import type { GcGoal, GcMonthCalendarProps } from "./types";
 
 const ROOT =
   "box-border rounded-xl border border-gc-border bg-gc-card p-4 text-gc-fg";
 
 export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
   function GcMonthCalendar(
-    { today, defaultMonth, locale = "en-US", className, ...rest },
+    {
+      goals,
+      values,
+      today,
+      defaultMonth,
+      locale = "en-US",
+      className,
+      ...rest
+    },
     ref,
   ) {
     // Read the clock once, in an initializer (render must stay pure). It can differ between
     // server and browser, so SSR consumers pass `today`.
     const [clockToday] = useState(() => toDateKey(new Date()));
     const todayKey = isDateKey(today) ? today : clockToday;
+    // Plain JS callers may pass anything here; draw at most two rings.
+    const shownGoals: readonly GcGoal[] = Array.isArray(goals)
+      ? goals.slice(0, 2)
+      : [];
     const [month] = useState(() =>
       isMonthKey(defaultMonth) ? defaultMonth : todayKey.slice(0, 7),
     );
@@ -39,6 +52,7 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
           day: "numeric",
         }),
         weekdays: weekdayNames(locale),
+        number: new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }),
       }),
       [locale],
     );
@@ -77,17 +91,22 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
                   const date = parseDateKey(key);
                   const isToday = key === todayKey;
                   const isFuture = key > todayKey;
+                  // Future days show empty tracks whatever `values` says.
+                  const progress = isFuture
+                    ? null
+                    : dayProgress(shownGoals, values?.[key]);
                   return (
                     <td
                       key={key}
                       data-today={isToday || undefined}
                       data-future={isFuture || undefined}
+                      data-complete={progress?.complete || undefined}
+                      data-empty={progress?.empty || undefined}
                       aria-current={isToday ? "date" : undefined}
                       className="group p-0 pb-2 text-center align-top"
                     >
                       <span className="sr-only">
-                        {fmt.date.format(date)}
-                        {isFuture && ", upcoming"}
+                        {dayLabel(fmt.date.format(date), progress, fmt.number)}
                       </span>
                       <div
                         aria-hidden="true"

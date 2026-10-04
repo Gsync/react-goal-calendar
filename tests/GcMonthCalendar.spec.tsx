@@ -1,13 +1,27 @@
 import { createRef, type Ref } from "react";
 import { render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { GcMonthCalendar, type GcMonthCalendarProps } from "../src";
+import {
+  GcMonthCalendar,
+  type GcGoal,
+  type GcMonthCalendarProps,
+} from "../src";
+
+const GOALS: [GcGoal, GcGoal] = [
+  { id: "jobs", label: "Jobs", target: 3 },
+  { id: "activity", label: "Activity", target: 2, unit: "h" },
+];
 
 function renderCalendar(
   props: Partial<GcMonthCalendarProps> & { ref?: Ref<HTMLDivElement> } = {},
 ) {
   return render(
-    <GcMonthCalendar today="2026-09-24" locale="en-US" {...props} />,
+    <GcMonthCalendar
+      goals={GOALS}
+      today="2026-09-24"
+      locale="en-US"
+      {...props}
+    />,
   );
 }
 
@@ -195,5 +209,142 @@ describe("GcMonthCalendar today and future", () => {
       "aria-current",
       "date",
     );
+  });
+});
+
+describe("GcMonthCalendar goal progress", () => {
+  it("describes each goal's progress in the day's accessible name", () => {
+    renderCalendar({ values: { "2026-09-01": { jobs: 2, activity: 1.5 } } });
+    const cell = screen.getByRole("cell", {
+      name: "Tuesday, September 1: Jobs 2 of 3, Activity 1.5 of 2 h",
+    });
+    expect(cell).not.toHaveAttribute("data-complete");
+  });
+
+  it("marks a day complete when every goal reaches its target", () => {
+    renderCalendar({ values: { "2026-09-03": { jobs: 3, activity: 2 } } });
+    const cell = screen.getByRole("cell", {
+      name: "Thursday, September 3: Jobs 3 of 3, Activity 2 of 2 h. All goals met.",
+    });
+    expect(cell).toHaveAttribute("data-complete");
+    expect(cell).not.toHaveAttribute("data-empty");
+  });
+
+  it("counts values above target as met and reports the real amount", () => {
+    renderCalendar({ values: { "2026-09-03": { jobs: 5, activity: 2.5 } } });
+    const cell = screen.getByRole("cell", {
+      name: "Thursday, September 3: Jobs 5 of 3, Activity 2.5 of 2 h. All goals met.",
+    });
+    expect(cell).toHaveAttribute("data-complete");
+  });
+
+  it("treats days and goals without values as zero progress", () => {
+    renderCalendar({ values: { "2026-09-02": { jobs: 1 } } });
+    const partial = screen.getByRole("cell", {
+      name: "Wednesday, September 2: Jobs 1 of 3, Activity 0 of 2 h",
+    });
+    expect(partial).not.toHaveAttribute("data-empty");
+    const empty = screen.getByRole("cell", {
+      name: "Monday, September 7: Jobs 0 of 3, Activity 0 of 2 h",
+    });
+    expect(empty).toHaveAttribute("data-empty");
+    expect(empty).not.toHaveAttribute("data-complete");
+  });
+
+  it("treats negative and non-finite values as zero", () => {
+    renderCalendar({
+      values: { "2026-09-02": { jobs: -2, activity: Number.NaN } },
+    });
+    const cell = screen.getByRole("cell", {
+      name: "Wednesday, September 2: Jobs 0 of 3, Activity 0 of 2 h",
+    });
+    expect(cell).toHaveAttribute("data-empty");
+  });
+
+  it("counts a goal with target 0 as met", () => {
+    renderCalendar({ goals: [{ id: "rest", label: "Rest", target: 0 }] });
+    const cell = screen.getByRole("cell", {
+      name: "Wednesday, September 2: Rest 0 of 0. All goals met.",
+    });
+    expect(cell).toHaveAttribute("data-complete");
+  });
+
+  it("ignores values after today", () => {
+    renderCalendar({ values: { "2026-09-25": { jobs: 3, activity: 2 } } });
+    const future = screen.getByRole("cell", {
+      name: "Friday, September 25, upcoming",
+    });
+    expect(future).not.toHaveAttribute("data-complete");
+    expect(future).not.toHaveAttribute("data-empty");
+  });
+
+  it("can be today and complete at once", () => {
+    renderCalendar({ values: { "2026-09-24": { jobs: 3, activity: 2 } } });
+    const today = dayCell("Thursday, September 24");
+    expect(today).toHaveAttribute("data-today");
+    expect(today).toHaveAttribute("data-complete");
+  });
+
+  it("works with a single goal", () => {
+    renderCalendar({
+      goals: [GOALS[0]],
+      values: { "2026-09-01": { jobs: 3, activity: 0 } },
+    });
+    const cell = screen.getByRole("cell", {
+      name: "Tuesday, September 1: Jobs 3 of 3. All goals met.",
+    });
+    expect(cell).toHaveAttribute("data-complete");
+  });
+
+  it("ignores goals beyond the second and survives an empty goal list", () => {
+    const three = [
+      ...GOALS,
+      { id: "extra", label: "Extra", target: 1 },
+    ] as unknown as GcMonthCalendarProps["goals"];
+    const { unmount } = renderCalendar({ goals: three });
+    expect(
+      screen.getByRole("cell", {
+        name: "Tuesday, September 1: Jobs 0 of 3, Activity 0 of 2 h",
+      }),
+    ).toBeInTheDocument();
+    unmount();
+    renderCalendar({ goals: [] as unknown as GcMonthCalendarProps["goals"] });
+    const cell = screen.getByRole("cell", { name: "Tuesday, September 1" });
+    expect(cell).not.toHaveAttribute("data-complete");
+    expect(cell).not.toHaveAttribute("data-empty");
+  });
+
+  it("ignores malformed date keys and unknown goal ids", () => {
+    renderCalendar({
+      values: { "2026-9-2": { jobs: 3 }, "2026-09-02": { other: 9 } },
+    });
+    expect(
+      screen.getByRole("cell", {
+        name: "Wednesday, September 2: Jobs 0 of 3, Activity 0 of 2 h",
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("formats numbers with the locale", () => {
+    renderCalendar({
+      locale: "de-DE",
+      values: { "2026-09-01": { activity: 1.5 } },
+    });
+    expect(
+      screen.getByRole("cell", { name: /Activity 1,5 of 2 h$/ }),
+    ).toBeInTheDocument();
+  });
+
+  it("updates when values change after mount", () => {
+    const { rerender } = renderCalendar({ values: {} });
+    rerender(
+      <GcMonthCalendar
+        goals={GOALS}
+        today="2026-09-24"
+        locale="en-US"
+        values={{ "2026-09-01": { jobs: 3, activity: 2 } }}
+      />,
+    );
+    expect(dayCell("Tuesday, September 1")).toHaveAttribute("data-complete");
   });
 });
