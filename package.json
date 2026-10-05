@@ -1,8 +1,12 @@
 {
   "name": "react-goal-calendar",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Presentational React components for goal tracking: progress-ring calendars, summary donuts and streak stats.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Gsync/react-goal-calendar.git"
+  },
   "author": "Khuram Niaz",
   "type": "module",
   "files": [
