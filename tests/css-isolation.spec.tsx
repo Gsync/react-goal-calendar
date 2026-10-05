@@ -26,6 +26,7 @@ describe("CSS isolation", () => {
           values={{ "2026-09-01": { calls: 20, emails: 3 } }}
           today="2026-09-24"
           locale="en-US"
+          legend
         />
       </GcCard>,
     );

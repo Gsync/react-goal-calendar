@@ -1,13 +1,11 @@
 import { useEffect, useLayoutEffect, useRef, type ReactNode } from "react";
 import { cn } from "../../lib/cn";
+import { RING_DOTS } from "./ringDots";
 import type { GcDayInfo } from "./types";
 
 const BOX =
   "gcx:pointer-events-none gcx:invisible gcx:absolute gcx:z-10 gcx:box-border gcx:w-max gcx:max-w-56 gcx:rounded-lg gcx:border gcx:border-gc-border gcx:bg-gc-tooltip-bg gcx:px-3 gcx:py-2 gcx:text-start gcx:text-xs gcx:leading-snug gcx:text-gc-tooltip-fg gcx:shadow-md gcx:motion-safe:transition-opacity gcx:motion-safe:duration-150 gcx:starting:opacity-0";
 const GAP = 4;
-
-// Dots match the rings: outer (first goal), inner (second goal).
-const DOTS = ["gcx:bg-gc-ring-1", "gcx:bg-gc-ring-2"] as const;
 
 // Measured and placed before paint; writes `style` directly so placing it costs no second render.
 export function DayTooltip({
@@ -69,7 +67,7 @@ export function DefaultTooltip({
       <ul className="gcx:m-0 gcx:mt-1 gcx:flex gcx:list-none gcx:flex-col gcx:gap-0.5 gcx:p-0">
         {day.goals.map(({ goal, done, target, fraction }, i) => (
           <li key={i} className="gcx:flex gcx:items-center gcx:gap-2">
-            <span className={cn("gcx:size-2 gcx:shrink-0 gcx:rounded-full", DOTS[i])} />
+            <span className={cn("gcx:size-2 gcx:shrink-0 gcx:rounded-full", RING_DOTS[i])} />
             <span className="gcx:flex-1">{goal.label}</span>
             <span className="gcx:tabular-nums">
               {`${number.format(done)} / ${number.format(target)}${goal.unit ? ` ${goal.unit}` : ""}`}

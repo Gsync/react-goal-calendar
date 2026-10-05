@@ -12,7 +12,7 @@ export interface GcGoal {
   unit?: string;
 }
 
-/** One day's data, as passed to `renderTooltip`. */
+/** One day's data, as passed to `renderTooltip` and `formatDayLabel`. */
 export interface GcDayInfo {
   /** The day as `YYYY-MM-DD`. */
   date: string;
@@ -88,6 +88,24 @@ interface GcMonthCalendarOwnProps {
    * @defaultValue the date and each goal's `done / target`, on past days and today
    */
   renderTooltip?: ((day: GcDayInfo) => ReactNode) | null;
+  /** Show a key below the grid: each goal's ring colour, label and daily target. */
+  legend?: boolean;
+  /**
+   * Accessible text for a day, e.g. to translate it. Gets the day's data and its date already
+   * formatted for `locale`. Return "" to use the built-in English text for that day. Check
+   * `day.future`: future days draw empty rings but still carry their `values` and `complete`.
+   * Numbers arrive raw; format them with one `Intl.NumberFormat` created outside the callback.
+   * @example formatDayLabel={(day, date) => `${date}: ${day.goals[0]?.done ?? 0} Anrufe`}
+   * @defaultValue built-in English, e.g. "Tuesday, September 1: Calls 20 of 20. All goals met."
+   */
+  formatDayLabel?: (day: GcDayInfo, dateText: string) => string;
+  /** Accessible names of the month buttons. */
+  labels?: {
+    /** @defaultValue "Previous month" */
+    previousMonth?: string;
+    /** @defaultValue "Next month" */
+    nextMonth?: string;
+  };
   /** Classes merged last onto the root element. */
   className?: string;
 }

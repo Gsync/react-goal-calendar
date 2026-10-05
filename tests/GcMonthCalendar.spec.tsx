@@ -986,3 +986,76 @@ describe("GcMonthCalendar development warnings", () => {
     expect(warn).not.toHaveBeenCalled();
   });
 });
+
+describe("GcMonthCalendar legend", () => {
+  it("shows no legend by default", () => {
+    renderCalendar();
+    expect(screen.queryByRole("list")).toBeNull();
+  });
+
+  it("lists each drawn goal with its daily target", () => {
+    renderCalendar({
+      legend: true,
+      goals: [
+        { id: "calls", label: "Calls", target: 1200 },
+        { id: "hours", label: "Hours", target: 2.5, unit: "h" },
+      ],
+    });
+    const items = within(screen.getByRole("list")).getAllByRole("listitem");
+    expect(items.map((item) => item.textContent)).toEqual(["Calls 1,200", "Hours 2.5 h"]);
+  });
+
+  it("formats targets with the locale", () => {
+    renderCalendar({
+      legend: true,
+      locale: "de-DE",
+      goals: [{ id: "calls", label: "Anrufe", target: 1200 }],
+    });
+    expect(screen.getByRole("listitem")).toHaveTextContent("Anrufe 1.200");
+  });
+
+  it("shows nothing without goals", () => {
+    renderCalendar({ legend: true, goals: [] });
+    expect(screen.queryByRole("list")).toBeNull();
+  });
+});
+
+describe("GcMonthCalendar translatable text", () => {
+  it("uses formatDayLabel for each day's accessible text", () => {
+    const format = vi.fn(
+      (day: GcDayInfo, dateText: string) => `${dateText}: ${day.goals[0]?.done ?? 0} Anrufe`,
+    );
+    renderCalendar({ values: { "2026-09-01": { jobs: 2 } }, formatDayLabel: format });
+    expect(
+      screen.getByRole("cell", { name: "Tuesday, September 1: 2 Anrufe" }),
+    ).toBeInTheDocument();
+    expect(format).toHaveBeenCalledWith(
+      expect.objectContaining({ date: "2026-09-01", today: false, future: false }),
+      "Tuesday, September 1",
+    );
+  });
+
+  it("passes future days with future: true", () => {
+    renderCalendar({
+      formatDayLabel: (day, dateText) => `${dateText}${day.future ? " (später)" : ""}`,
+    });
+    expect(
+      screen.getByRole("cell", { name: "Friday, September 25 (später)" }),
+    ).toBeInTheDocument();
+  });
+
+  it("falls back to the built-in text when formatDayLabel returns an empty string", () => {
+    renderCalendar({ formatDayLabel: () => "" });
+    expect(
+      screen.getByRole("cell", {
+        name: "Tuesday, September 1: Jobs 0 of 3, Activity 0 of 2 h",
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("translates the month buttons, keeping English for a missing label", () => {
+    renderCalendar({ labels: { nextMonth: "Nächster Monat" } });
+    expect(screen.getByRole("button", { name: "Nächster Monat" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Previous month" })).toBeInTheDocument();
+  });
+});

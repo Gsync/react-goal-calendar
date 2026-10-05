@@ -20,7 +20,8 @@ import {
 import { DayRings } from "./DayRings";
 import { dayLabel, weekdayNames } from "./format";
 import { DayTooltip, DefaultTooltip } from "./DayTooltip";
-import { dayInfo, dayProgress } from "./progress";
+import { dayInfo, dayProgress, type DayProgress } from "./progress";
+import { RING_DOTS } from "./ringDots";
 import type { GcDayInfo, GcGoal, GcMonthCalendarProps } from "./types";
 import { propWarnings, warn } from "./warnings";
 
@@ -75,6 +76,9 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
       onMonthChange,
       locale = "en-US",
       renderTooltip,
+      legend = false,
+      formatDayLabel,
+      labels,
       className,
       ...rest
     },
@@ -163,6 +167,15 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
         />
       );
     }
+    function dayText(key: string, dateText: string, progress: DayProgress | null): string {
+      const custom = formatDayLabel?.(
+        dayInfo(key, todayKey, shownGoals, values?.[key]),
+        dateText,
+      );
+      return typeof custom === "string" && custom !== ""
+        ? custom
+        : dayLabel(dateText, progress, fmt.number);
+    }
     const tooltipFor =
       renderTooltip === undefined ? defaultTooltip : renderTooltip;
     const tooltip =
@@ -182,7 +195,7 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
           <div className="gcx:flex gcx:gap-1">
             <button
               type="button"
-              aria-label="Previous month"
+              aria-label={labels?.previousMonth || "Previous month"}
               aria-disabled={!canGoBack || undefined}
               onClick={() => {
                 if (canGoBack) showMonth(addMonths(shownMonth, -1));
@@ -193,7 +206,7 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
             </button>
             <button
               type="button"
-              aria-label="Next month"
+              aria-label={labels?.nextMonth || "Next month"}
               aria-disabled={!canGoForward || undefined}
               onClick={() => {
                 if (canGoForward) showMonth(addMonths(shownMonth, 1));
@@ -256,7 +269,7 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
                       className="gcx:group gcx:p-0 gcx:text-center gcx:align-top"
                     >
                       <span className="gcx:sr-only">
-                        {dayLabel(fmt.date.format(date), progress, fmt.number)}
+                        {dayText(key, fmt.date.format(date), progress)}
                       </span>
                       <div
                         aria-hidden="true"
@@ -283,6 +296,22 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
             ))}
           </tbody>
         </table>
+        {legend && shownGoals.length > 0 && (
+          <ul className="gcx:m-0 gcx:mt-3 gcx:flex gcx:list-none gcx:flex-wrap gcx:gap-x-4 gcx:gap-y-1 gcx:p-0 gcx:text-xs gcx:text-gc-muted-fg">
+            {dayProgress(shownGoals, undefined).rings.map(({ goal, target }, i) => (
+              <li key={i} className="gcx:flex gcx:items-center gcx:gap-1.5">
+                <span
+                  aria-hidden="true"
+                  className={cn("gcx:size-2 gcx:shrink-0 gcx:rounded-full", RING_DOTS[i])}
+                />
+                <span className="gcx:text-gc-fg">{goal.label}</span>{" "}
+                <span className="gcx:tabular-nums">
+                  {`${fmt.number.format(target)}${goal.unit ? ` ${goal.unit}` : ""}`}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
         {hover && tooltipKey !== undefined && (
           <DayTooltip anchor={hover.cell} onDismiss={() => setHover(null)}>
             {tooltip}

@@ -13,7 +13,7 @@ export function weekdayNames(
   });
 }
 
-// English sentence frame for v1; a `labels` prop for translation can come later.
+// English sentence frame; `formatDayLabel` replaces it.
 // `progress` is null for future days, which are dimmed, so the text says "upcoming".
 export function dayLabel(
   dateText: string,

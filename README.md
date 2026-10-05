@@ -91,6 +91,9 @@ const goals: GcGoal[] = [
 | `onMonthChange`         | `(month: "YYYY-MM") => void`                     |                                                |
 | `locale`                | BCP 47 string                                    | `"en-US"`                                      |
 | `renderTooltip`         | `(day: GcDayInfo) => ReactNode`, or `null`       | built-in summary                               |
+| `legend`                | `boolean`                                        | `false`                                        |
+| `formatDayLabel`        | `(day: GcDayInfo, dateText: string) => string`   | built-in English                               |
+| `labels`                | `{ previousMonth?, nextMonth? }`                 | English                                        |
 | `className`             | `string`                                         |                                                |
 
 **Controlled month.** Pass `month` and update it from `onMonthChange` to own the month, e.g. to
@@ -103,6 +106,9 @@ const [month, setMonth] = useState("2026-09");
 <GcMonthCalendar goals={goals} values={values} month={month} onMonthChange={setMonth} />
 ```
 
+**Legend.** `legend` shows each goal's ring colour, label and daily target below the grid, so users
+can tell the rings apart without hovering.
+
 Other `<div>` props pass through to the root, and `ref` points at it.
 
 `GcGoal` is `{ id: string; label: string; target: number; unit?: string }`.
@@ -113,7 +119,10 @@ Other `<div>` props pass through to the root, and `ref` points at it.
 - Days after `today` are dimmed and show empty rings, even if `values` has entries for them. Their
   accessible text ends in ", upcoming".
 - Each day's accessible text reads like "Tuesday, September 1: Calls 20 of 20, Emails 10 of 10.
-  All goals met." (English in this version; dates and numbers follow `locale`).
+  All goals met." (English by default; pass `formatDayLabel` and `labels` to translate. Dates and
+  numbers follow `locale`). `formatDayLabel` gets the date already formatted but raw numbers: format
+  them with one `Intl.NumberFormat` created outside the callback, and check `day.future`, since
+  future days still carry their `values`.
 
 In development, the calendar logs a `console.warn` for props it has to ignore: a malformed `today`,
 `month`, `defaultMonth`, `minMonth` or `maxMonth`, `minMonth` after `maxMonth`, an invalid

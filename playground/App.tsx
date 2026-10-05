@@ -16,6 +16,7 @@ for (let day = 1; day <= 24; day++) {
 }
 
 const card: CSSProperties = { maxWidth: 380 };
+const deNumber = new Intl.NumberFormat("de-DE");
 const customRings = {
   "--gc-ring-1": "#e11d48",
   "--gc-ring-2": "#f59e0b",
@@ -49,6 +50,7 @@ export function App() {
             today="2026-09-24"
             month={month}
             onMonthChange={setMonth}
+            legend
           />
         </GcCard>
 
@@ -59,6 +61,23 @@ export function App() {
             values={VALUES}
             today="2026-09-24"
             weekStartsOn={0}
+          />
+        </GcCard>
+
+        <h3>German, translated text</h3>
+        <GcCard style={card}>
+          <GcMonthCalendar
+            goals={GOALS}
+            values={VALUES}
+            today="2026-09-24"
+            locale="de-DE"
+            legend
+            labels={{ previousMonth: "Vorheriger Monat", nextMonth: "Nächster Monat" }}
+            formatDayLabel={(day, date) =>
+              day.future
+                ? `${date}, bevorstehend`
+                : `${date}: ${day.goals.map((g) => `${g.goal.label} ${deNumber.format(g.done)} von ${deNumber.format(g.target)}`).join(", ")}`
+            }
           />
         </GcCard>
 
