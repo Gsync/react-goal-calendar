@@ -267,11 +267,11 @@ const toDateKey = (date: Date) => dateKey.format(date);
    export function GoalCalendar({ today, goals }: { today: string; goals: GcGoal[] }) {
      const [month, setMonth] = useState(today.slice(0, 7));
      const [values, setValues] = useState<Values>({});
-     const [loading, setLoading] = useState(true);
+     const [loadedMonth, setLoadedMonth] = useState<string | null>(null);
+     const loading = loadedMonth !== month;
 
      useEffect(() => {
        let cancelled = false;
-       setLoading(true);
        fetch(`/api/goals?month=${month}`)
          .then((res) => {
            if (!res.ok) throw new Error(res.statusText);
@@ -282,7 +282,7 @@ const toDateKey = (date: Date) => dateKey.format(date);
          })
          .catch(() => {}) // Show your own error state here.
          .finally(() => {
-           if (!cancelled) setLoading(false);
+           if (!cancelled) setLoadedMonth(month);
          });
        return () => {
          cancelled = true;
