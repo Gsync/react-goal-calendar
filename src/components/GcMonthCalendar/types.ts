@@ -81,9 +81,10 @@ interface GcMonthCalendarOwnProps {
    */
   locale?: string;
   /**
-   * Content of the tooltip shown while the mouse is over a day. Return `null` to show none for that
-   * day, or pass `null` to turn tooltips off. The tooltip opens for mouse pointers only, closes on
-   * Escape and is hidden from assistive tech, so don't put information only there.
+   * Content of the tooltip shown for a hovered or tapped day. Return `null` to show none for that
+   * day, or pass `null` to turn tooltips off. The tooltip opens while the mouse is over a day or
+   * when a day is tapped, closes on Escape or a tap elsewhere, and is hidden from assistive tech,
+   * so don't put information only there.
    * @example renderTooltip={(day) => (day.future ? null : `${day.goals[0]?.done ?? 0} calls`)}
    * @defaultValue the date and each goal's `done / target`, on past days and today
    */

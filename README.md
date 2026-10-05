@@ -133,10 +133,10 @@ Each day `<td>` carries these attributes when they apply, for styling or tests: 
 `aria-current="date"`), `data-future`, `data-complete` (every goal met), `data-empty` (nothing
 recorded).
 
-**Tooltip.** While the mouse is over a past day or today, a small card shows the date and each
-goal's `done / target`, with a ✓ for met goals. Pass `renderTooltip` to change what's inside the
-card (it keeps its box and position), return `null` to show nothing for a day, or pass
-`renderTooltip={null}` to turn it off:
+**Tooltip.** While the mouse is over a past day or today, or after tapping one, a small card shows
+the date and each goal's `done / target`, with a ✓ for met goals. Pass `renderTooltip` to change
+what's inside the card (it keeps its box and position), return `null` to show nothing for a day, or
+pass `renderTooltip={null}` to turn it off:
 
 ```tsx
 <GcMonthCalendar
@@ -151,10 +151,10 @@ card (it keeps its box and position), return `null` to show nothing for a day, o
 `GcDayInfo` is `{ date, today, future, complete, goals: { goal, done, target, fraction }[] }`. For
 future days `goals` holds the real `values`, even though their rings draw empty.
 
-The tooltip opens for mouse pointers only, closes on Escape, and is hidden from assistive tech,
-because each day's accessible text already has the same numbers. Keyboard, touch and screen-reader
-users never see it, so don't put information only there. The hovered day gets `data-hovered` and
-the card carries `data-gc-tooltip`, for styling.
+The tooltip opens on mouse hover and on tap (touch or pen), closes on Escape or a tap elsewhere,
+and is hidden from assistive tech, because each day's accessible text already has the same
+numbers. Keyboard and screen-reader users never see it, so don't put information only there. The
+hovered or tapped day gets `data-hovered` and the card carries `data-gc-tooltip`, for styling.
 
 **Server rendering:** pass `today`. Otherwise the server's clock (often UTC) and the browser's can
 disagree on the date and cause a hydration mismatch.

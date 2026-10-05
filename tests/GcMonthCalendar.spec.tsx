@@ -748,13 +748,45 @@ describe("GcMonthCalendar tooltip", () => {
     expect(tooltip()).toBeNull();
   });
 
-  it("ignores touch pointers", async () => {
+  it("opens on tap and stays open after the finger lifts", async () => {
     const user = userEvent.setup();
     renderCalendar({ values: VALUES });
-    await user.pointer({
-      keys: "[TouchA>]",
-      target: dayCell("Tuesday, September 1"),
-    });
+    await user.pointer({ keys: "[TouchA]", target: dayCell("Tuesday, September 1") });
+    expect(tooltip()).toHaveTextContent("Tuesday, September 1");
+    expect(dayCell("Tuesday, September 1")).toHaveAttribute("data-hovered");
+  });
+
+  it("closes on a tap elsewhere", async () => {
+    const user = userEvent.setup();
+    renderCalendar({ values: VALUES });
+    await user.pointer({ keys: "[TouchA]", target: dayCell("Tuesday, September 1") });
+    await user.pointer({ keys: "[TouchA]", target: screen.getByRole("status") });
+    expect(tooltip()).toBeNull();
+  });
+
+  it("moves to another day on tap and closes on a second tap of the same day", async () => {
+    const user = userEvent.setup();
+    renderCalendar({ values: VALUES });
+    await user.pointer({ keys: "[TouchA]", target: dayCell("Tuesday, September 1") });
+    await user.pointer({ keys: "[TouchA]", target: dayCell("Wednesday, September 2") });
+    expect(document.querySelectorAll("[data-gc-tooltip]")).toHaveLength(1);
+    expect(tooltip()).toHaveTextContent("Wednesday, September 2");
+    await user.pointer({ keys: "[TouchA]", target: dayCell("Wednesday, September 2") });
+    expect(tooltip()).toBeNull();
+  });
+
+  it("shows nothing when a future day is tapped", async () => {
+    const user = userEvent.setup();
+    renderCalendar({ values: VALUES });
+    await user.pointer({ keys: "[TouchA]", target: dayCell("Friday, September 25") });
+    expect(tooltip()).toBeNull();
+  });
+
+  it("closes a tapped tooltip on Escape", async () => {
+    const user = userEvent.setup();
+    renderCalendar({ values: VALUES });
+    await user.pointer({ keys: "[TouchA]", target: dayCell("Tuesday, September 1") });
+    await user.keyboard("{Escape}");
     expect(tooltip()).toBeNull();
   });
 

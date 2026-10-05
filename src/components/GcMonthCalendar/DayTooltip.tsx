@@ -18,7 +18,7 @@ export function DayTooltip({
   children: ReactNode;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  // WCAG 1.4.13: hover content that covers other content must close on Escape.
+  // WCAG 1.4.13: content shown on hover or tap that covers other content must close on Escape.
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") onDismiss();
@@ -26,6 +26,14 @@ export function DayTooltip({
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [onDismiss]);
+  // A tap outside the day closes it; taps on the day itself toggle it in the cell's handler.
+  useEffect(() => {
+    function onPointerDown(event: PointerEvent) {
+      if (!(event.target instanceof Node) || !anchor.contains(event.target)) onDismiss();
+    }
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [anchor, onDismiss]);
   useLayoutEffect(() => {
     const box = ref.current;
     const root = box?.offsetParent;

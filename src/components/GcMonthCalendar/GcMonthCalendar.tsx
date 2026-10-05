@@ -261,11 +261,20 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
                         if (event.pointerType === "mouse")
                           setHover({ key, cell: event.currentTarget });
                       }}
-                      onPointerLeave={() =>
+                      onPointerUp={(event) => {
+                        if (event.pointerType === "mouse") return;
+                        const cell = event.currentTarget;
                         setHover((current) =>
-                          current?.key === key ? null : current,
-                        )
-                      }
+                          current?.key === key ? null : { key, cell },
+                        );
+                      }}
+                      onPointerLeave={(event) => {
+                        // Lifting a finger fires pointerleave; only a mouse leaving closes.
+                        if (event.pointerType === "mouse")
+                          setHover((current) =>
+                            current?.key === key ? null : current,
+                          );
+                      }}
                       className="gcx:group gcx:p-0 gcx:text-center gcx:align-top"
                     >
                       <span className="gcx:sr-only">
