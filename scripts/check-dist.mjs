@@ -11,11 +11,11 @@ if (!js.startsWith('"use client";')) {
 }
 
 const mod = await import(new URL("../dist/index.js", import.meta.url).href);
-for (const name of ["GcMonthCalendar"]) {
+for (const name of ["GcMonthCalendar", "GcCard"]) {
   if (!mod[name]) failures.push(`dist/index.js does not export ${name}`);
 }
 
-for (const name of ["GcMonthCalendarProps", "GcGoal", "GcDayInfo"]) {
+for (const name of ["GcMonthCalendarProps", "GcGoal", "GcDayInfo", "GcCardProps"]) {
   if (!new RegExp(`\\b${name}\\b`).test(dts)) {
     failures.push(`dist/index.d.ts does not declare ${name}`);
   }

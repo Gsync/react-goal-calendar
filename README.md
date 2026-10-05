@@ -55,22 +55,28 @@ A month of days, each with one or two progress rings: the outer ring for the fir
 ring for the second. Weeks start on Monday. Days are read-only; the only controls are the previous
 and next month buttons.
 
+The calendar draws no card frame; wrap it in `GcCard` for one, or place it in your own card. In your
+own card, set `--gc-card` to the card's background colour: the ring tracks and the tooltip are mixed
+with it.
+
 ```tsx
-import { GcMonthCalendar, type GcGoal } from "react-goal-calendar";
+import { GcCard, GcMonthCalendar, type GcGoal } from "react-goal-calendar";
 
 const goals: [GcGoal, GcGoal] = [
   { id: "calls", label: "Calls", target: 20 },
   { id: "emails", label: "Emails", target: 10 },
 ];
 
-<GcMonthCalendar
-  goals={goals}
-  values={{
-    "2026-09-01": { calls: 20, emails: 10 },
-    "2026-09-02": { calls: 8 },
-  }}
-  today="2026-09-24"
-/>;
+<GcCard>
+  <GcMonthCalendar
+    goals={goals}
+    values={{
+      "2026-09-01": { calls: 20, emails: 10 },
+      "2026-09-02": { calls: 8 },
+    }}
+    today="2026-09-24"
+  />
+</GcCard>;
 ```
 
 Declare `goals` inline or type it as `[GcGoal]` / `[GcGoal, GcGoal]`. A plain `GcGoal[]` is
@@ -138,6 +144,20 @@ disagree on the date and cause a hydration mismatch.
 | `--gc-ring-2-track` | Inner ring track (default: faded ring 2)  |
 | `--gc-tooltip-bg`   | Tooltip background (default: `--gc-card`) |
 | `--gc-tooltip-fg`   | Tooltip text (default: `--gc-fg`)         |
+
+### GcCard
+
+The card frame used in the examples: border, rounded corners, card background and padding. Wrap
+any component in it, or skip it and use your own card.
+
+```tsx
+<GcCard>
+  <GcMonthCalendar goals={goals} values={values} today={today} />
+</GcCard>
+```
+
+All `<div>` props pass through, `className` is merged last and `ref` points at the `<div>`. Colours
+come from `--gc-card`, `--gc-border` and `--gc-fg`.
 
 ## Conventions
 

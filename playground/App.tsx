@@ -1,5 +1,5 @@
 import { useState, type CSSProperties } from "react";
-import { GcMonthCalendar, type GcGoal } from "../src";
+import { GcCard, GcMonthCalendar, type GcGoal } from "../src";
 
 const GOALS: [GcGoal, GcGoal] = [
   { id: "calls", label: "Calls", target: 20 },
@@ -39,71 +39,89 @@ export function App() {
         <h2>GcMonthCalendar</h2>
 
         <h3>Two goals (onMonthChange: {month})</h3>
-        <GcMonthCalendar
-          goals={GOALS}
-          values={VALUES}
-          today="2026-09-24"
-          onMonthChange={setMonth}
-          style={card}
-        />
+        <GcCard style={card}>
+          <GcMonthCalendar
+            goals={GOALS}
+            values={VALUES}
+            today="2026-09-24"
+            onMonthChange={setMonth}
+          />
+        </GcCard>
 
         <h3>Dark, en-GB</h3>
         <div className="dark" style={{ background: "#020617", padding: 16 }}>
-          <GcMonthCalendar
-            goals={GOALS}
-            values={VALUES}
-            today="2026-09-24"
-            locale="en-GB"
-            style={card}
-          />
+          <GcCard style={card}>
+            <GcMonthCalendar
+              goals={GOALS}
+              values={VALUES}
+              today="2026-09-24"
+              locale="en-GB"
+            />
+          </GcCard>
         </div>
 
         <h3>One goal, limited to Aug–Oct 2026</h3>
-        <GcMonthCalendar
-          goals={[GOALS[0]]}
-          values={VALUES}
-          today="2026-09-24"
-          minMonth="2026-08"
-          maxMonth="2026-10"
-          style={card}
-        />
+        <GcCard style={card}>
+          <GcMonthCalendar
+            goals={[GOALS[0]]}
+            values={VALUES}
+            today="2026-09-24"
+            minMonth="2026-08"
+            maxMonth="2026-10"
+          />
+        </GcCard>
 
         <h3>Right-to-left with custom ring colours</h3>
         <div dir="rtl" style={customRings}>
+          <GcCard style={card}>
+            <GcMonthCalendar
+              goals={GOALS}
+              values={VALUES}
+              today="2026-09-24"
+            />
+          </GcCard>
+        </div>
+
+        <h3>Custom tooltip (percent of target)</h3>
+        <GcCard style={card}>
           <GcMonthCalendar
             goals={GOALS}
             values={VALUES}
             today="2026-09-24"
-            style={card}
+            renderTooltip={(day) =>
+              day.future
+                ? null
+                : day.goals
+                    .map(
+                      ({ goal, fraction }) =>
+                        `${goal.label} ${Math.round(fraction * 100)}%`,
+                    )
+                    .join(" · ")
+            }
           />
-        </div>
-
-        <h3>Custom tooltip (percent of target)</h3>
-        <GcMonthCalendar
-          goals={GOALS}
-          values={VALUES}
-          today="2026-09-24"
-          style={card}
-          renderTooltip={(day) =>
-            day.future
-              ? null
-              : day.goals
-                  .map(
-                    ({ goal, fraction }) =>
-                      `${goal.label} ${Math.round(fraction * 100)}%`,
-                  )
-                  .join(" · ")
-          }
-        />
+        </GcCard>
 
         <h3>Tooltips off</h3>
-        <GcMonthCalendar
-          goals={GOALS}
-          values={VALUES}
-          today="2026-09-24"
-          style={card}
-          renderTooltip={null}
-        />
+        <GcCard style={card}>
+          <GcMonthCalendar
+            goals={GOALS}
+            values={VALUES}
+            today="2026-09-24"
+            renderTooltip={null}
+          />
+        </GcCard>
+
+        <h3>Without GcCard, inside the app's own box</h3>
+        <div style={{ ...card, border: "2px dashed #94a3b8", padding: 8 }}>
+          <GcMonthCalendar goals={GOALS} values={VALUES} today="2026-09-24" />
+        </div>
+      </section>
+
+      <section>
+        <h2>GcCard</h2>
+        <GcCard style={card}>
+          <p style={{ margin: 0 }}>Any content</p>
+        </GcCard>
       </section>
     </main>
   );

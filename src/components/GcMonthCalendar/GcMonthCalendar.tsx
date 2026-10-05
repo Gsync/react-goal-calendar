@@ -15,8 +15,8 @@ import { DayTooltip, DefaultTooltip } from "./DayTooltip";
 import { dayInfo, dayProgress } from "./progress";
 import type { GcDayInfo, GcGoal, GcMonthCalendarProps } from "./types";
 
-const ROOT =
-  "gcx:relative gcx:box-border gcx:rounded-xl gcx:border gcx:border-gc-border gcx:bg-gc-card gcx:p-4 gcx:text-gc-fg";
+// No frame: wrap in GcCard for one. `relative` anchors the tooltip.
+const ROOT = "gcx:relative gcx:box-border gcx:text-gc-fg";
 
 const NAV_BUTTON =
   "gcx:inline-flex gcx:size-8 gcx:cursor-pointer gcx:items-center gcx:justify-center gcx:rounded-md gcx:border-0 gcx:bg-transparent gcx:p-0 gcx:text-gc-muted-fg gcx:hover:bg-gc-muted gcx:hover:text-gc-fg gcx:focus-visible:outline-2 gcx:focus-visible:outline-offset-2 gcx:focus-visible:outline-gc-primary gcx:aria-disabled:cursor-not-allowed gcx:aria-disabled:opacity-40 gcx:aria-disabled:hover:bg-transparent gcx:aria-disabled:hover:text-gc-muted-fg";

@@ -7,3 +7,5 @@ export type {
   GcGoal,
   GcMonthCalendarProps,
 } from "./components/GcMonthCalendar/types";
+export { GcCard } from "./components/GcCard/GcCard";
+export type { GcCardProps } from "./components/GcCard/types";
