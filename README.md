@@ -2,6 +2,13 @@
 
 Presentational React components for goal tracking: progress-ring calendars, summary donuts and streak stats. Ships as ESM with TypeScript types and one precompiled stylesheet. Your app doesn't need any Tailwind config.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Gsync/react-goal-calendar/main/.github/assets/calendar-dark.png">
+  <img alt="A month calendar with progress rings for each day" src="https://raw.githubusercontent.com/Gsync/react-goal-calendar/main/.github/assets/calendar-light.png" width="380">
+</picture>
+
+**[Live demo](https://gsync.github.io/react-goal-calendar/)**
+
 ## Install
 
 ```sh
@@ -46,6 +53,28 @@ Dark mode follows a `.dark` class or `[data-theme="dark"]` attribute on any ance
 ```
 
 Components may add their own `--gc-*` variables; each component's section lists them.
+
+### Matching shadcn/ui
+
+Map the calendar's colours to your shadcn variables once, in your global CSS:
+
+```css
+/* shadcn with Tailwind v4: variables hold full colours, e.g. oklch(…) */
+:root,
+.dark {
+  --gc-fg: var(--foreground);
+  --gc-muted: var(--muted);
+  --gc-muted-fg: var(--muted-foreground);
+  --gc-border: var(--border);
+  --gc-primary: var(--primary);
+  --gc-card: var(--card);
+  --gc-ring-1: var(--chart-1);
+  --gc-ring-2: var(--chart-2);
+}
+```
+
+Older shadcn setups store bare HSL numbers (`--card: 0 0% 100%`). Wrap each one: `--gc-card: hsl(var(--card));`.
+The `.dark` selector is listed too so the mapping is re-read inside a dark subtree.
 
 ## Components
 
@@ -181,6 +210,112 @@ any component in it, or skip it and use your own card.
 
 All `<div>` props pass through, `className` is merged last and `ref` points at the `<div>`. Colours
 come from `--gc-card`, `--gc-border` and `--gc-fg`.
+
+## Recipes
+
+### Building `values` from your records
+
+`values` is keyed by the user's local date. In the browser, build the key from local date parts;
+`toISOString()` is UTC and can land on the wrong day.
+
+```ts
+function toDateKey(date: Date): string {
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${date.getFullYear()}-${m}-${d}`;
+}
+
+const values: Record<string, Record<string, number>> = {};
+function add(date: Date, goalId: string, amount = 1) {
+  const day = (values[toDateKey(date)] ??= {});
+  day[goalId] = (day[goalId] ?? 0) + amount;
+}
+
+for (const call of calls) add(call.startedAt, "calls");
+for (const email of emails) add(email.sentAt, "emails");
+```
+
+On a server, local date parts are the server's (usually UTC). Format in the user's time zone
+instead, creating the formatter once:
+
+```ts
+// "en-CA" formats as YYYY-MM-DD.
+const dateKey = new Intl.DateTimeFormat("en-CA", { timeZone: userTimeZone });
+const toDateKey = (date: Date) => dateKey.format(date);
+```
+
+### Next.js App Router
+
+1. Import the stylesheet once in `app/layout.tsx`: `import "react-goal-calendar/style.css";`
+2. Compute `today` on the server in the **user's** time zone (the server usually runs in UTC) and
+   pass it down, so server and browser render the same day:
+
+   ```ts
+   // "en-CA" formats as YYYY-MM-DD.
+   const today = new Intl.DateTimeFormat("en-CA", { timeZone: userTimeZone }).format(new Date());
+   ```
+
+3. Load data per month in a client component with a controlled `month`:
+
+   ```tsx
+   "use client";
+   import { useEffect, useState } from "react";
+   import { GcCard, GcMonthCalendar, type GcGoal } from "react-goal-calendar";
+
+   type Values = Record<string, Record<string, number>>;
+
+   export function GoalCalendar({ today, goals }: { today: string; goals: GcGoal[] }) {
+     const [month, setMonth] = useState(today.slice(0, 7));
+     const [values, setValues] = useState<Values>({});
+     const [loading, setLoading] = useState(true);
+
+     useEffect(() => {
+       let cancelled = false;
+       setLoading(true);
+       fetch(`/api/goals?month=${month}`)
+         .then((res) => {
+           if (!res.ok) throw new Error(res.statusText);
+           return res.json() as Promise<Values>;
+         })
+         .then((data) => {
+           if (!cancelled) setValues((prev) => ({ ...prev, ...data }));
+         })
+         .catch(() => {}) // Show your own error state here.
+         .finally(() => {
+           if (!cancelled) setLoading(false);
+         });
+       return () => {
+         cancelled = true;
+       };
+     }, [month]);
+
+     return (
+       <GcCard>
+         <GcMonthCalendar
+           goals={goals}
+           values={values}
+           today={today}
+           month={month}
+           onMonthChange={setMonth}
+           legend
+           aria-busy={loading}
+           className={loading ? "opacity-60" : undefined}
+         />
+       </GcCard>
+     );
+   }
+   ```
+
+## Styling API
+
+Stable (changes are always called out in the changelog, and need a major release from 1.0):
+
+- the `--gc-*` variables listed in this README
+- the `data-*` attributes: `data-today`, `data-future`, `data-complete`, `data-empty`,
+  `data-hovered`, `data-gc-tooltip`
+
+Not stable, so don't target them: class names (they all start with `gcx:`), element structure, and
+Tailwind's `--gcx-*` variables (`--gcx-spacing`, `--gcx-color-blue-600`).
 
 ## Conventions
 

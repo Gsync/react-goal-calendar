@@ -17,6 +17,7 @@
     "type": "git",
     "url": "git+https://github.com/Gsync/react-goal-calendar.git"
   },
+  "homepage": "https://gsync.github.io/react-goal-calendar/",
   "author": "Khuram Niaz",
   "type": "module",
   "files": [
@@ -38,6 +39,7 @@
   "scripts": {
     "dev": "vite playground",
     "build": "vite build",
+    "build:playground": "vite build playground --base=/react-goal-calendar/",
     "check:dist": "node scripts/check-dist.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
