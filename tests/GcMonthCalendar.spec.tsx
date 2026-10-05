@@ -1,4 +1,4 @@
-import { createRef, type ReactNode, type Ref } from "react";
+import { createRef, useState, type ReactNode, type Ref } from "react";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -151,6 +151,44 @@ describe("GcMonthCalendar month grid", () => {
     expect(ref.current).toBe(root);
     expect(root).toHaveClass("custom");
     expect(root).toHaveAttribute("id", "cal");
+  });
+});
+
+describe("GcMonthCalendar week start", () => {
+  const letters = () =>
+    screen
+      .getAllByRole("columnheader")
+      .map((th) => th.querySelector("[aria-hidden]")?.textContent);
+
+  it("starts weeks on Sunday with weekStartsOn={0}", () => {
+    renderCalendar({ defaultMonth: "2026-09", weekStartsOn: 0 });
+    expect(weekRows()).toEqual([
+      ["", "", ...days(1, 5)],
+      days(6, 12),
+      days(13, 19),
+      days(20, 26),
+      [...days(27, 30), "", "", ""],
+    ]);
+    expect(letters()).toEqual(["S", "M", "T", "W", "T", "F", "S"]);
+    expect(screen.getAllByRole("columnheader")[0]).toHaveAccessibleName("Sunday");
+  });
+
+  it("starts weeks on Saturday with weekStartsOn={6}", () => {
+    renderCalendar({ defaultMonth: "2026-09", weekStartsOn: 6 });
+    expect(weekRows()).toEqual([
+      ["", "", "", ...days(1, 4)],
+      days(5, 11),
+      days(12, 18),
+      days(19, 25),
+      [...days(26, 30), "", ""],
+    ]);
+    expect(screen.getAllByRole("columnheader")[0]).toHaveAccessibleName("Saturday");
+  });
+
+  it("falls back to Monday for an invalid weekStartsOn", () => {
+    renderCalendar({ defaultMonth: "2026-09", weekStartsOn: 7 as never });
+    expect(screen.getAllByRole("columnheader")[0]).toHaveAccessibleName("Monday");
+    expect(weekRows()[0]).toEqual(["", ...days(1, 6)]);
   });
 });
 
@@ -527,6 +565,79 @@ describe("GcMonthCalendar month bounds", () => {
     expect(
       screen.getByRole("button", { name: "Next month" }),
     ).not.toHaveAttribute("aria-disabled");
+  });
+});
+
+describe("GcMonthCalendar controlled month", () => {
+  it("shows the month prop and only reports navigation", async () => {
+    const user = userEvent.setup();
+    const onMonthChange = vi.fn();
+    renderCalendar({ month: "2026-05", onMonthChange });
+    expect(screen.getByRole("status")).toHaveTextContent("May 2026");
+    await user.click(screen.getByRole("button", { name: "Next month" }));
+    expect(onMonthChange).toHaveBeenLastCalledWith("2026-06");
+    expect(screen.getByRole("status")).toHaveTextContent("May 2026");
+  });
+
+  it("follows a parent that stores the reported month", async () => {
+    const user = userEvent.setup();
+    function Parent() {
+      const [month, setMonth] = useState("2026-09");
+      return (
+        <>
+          <button type="button" onClick={() => setMonth("2026-09")}>
+            Today
+          </button>
+          <GcMonthCalendar
+            goals={GOALS}
+            today="2026-09-24"
+            locale="en-US"
+            month={month}
+            onMonthChange={setMonth}
+          />
+        </>
+      );
+    }
+    render(<Parent />);
+    await user.click(screen.getByRole("button", { name: "Next month" }));
+    await user.click(screen.getByRole("button", { name: "Next month" }));
+    expect(screen.getByRole("status")).toHaveTextContent("Nov 2026");
+    await user.click(screen.getByRole("button", { name: "Today" }));
+    expect(screen.getByRole("status")).toHaveTextContent("Sep 2026");
+  });
+
+  it("keeps a controlled month inside minMonth and maxMonth", () => {
+    renderCalendar({ month: "2027-03", minMonth: "2026-06", maxMonth: "2026-12" });
+    expect(screen.getByRole("status")).toHaveTextContent("Dec 2026");
+    expect(screen.getByRole("button", { name: "Next month" })).toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
+    expect(
+      screen.getByRole("button", { name: "Previous month" }),
+    ).not.toHaveAttribute("aria-disabled");
+  });
+
+  it("uses its own month when the month prop is malformed", () => {
+    renderCalendar({ month: "2026-5", defaultMonth: "2026-07" });
+    expect(screen.getByRole("status")).toHaveTextContent("Jul 2026");
+  });
+
+  it("closes the tooltip when the parent changes the month, and keeps it closed on return", async () => {
+    const user = userEvent.setup();
+    const props = {
+      goals: GOALS,
+      today: "2026-09-24",
+      locale: "en-US",
+      values: { "2026-09-01": { jobs: 1 } },
+    };
+    const { rerender } = render(<GcMonthCalendar {...props} month="2026-09" />);
+    await user.hover(dayCell("Tuesday, September 1"));
+    expect(document.querySelector("[data-gc-tooltip]")).not.toBeNull();
+    rerender(<GcMonthCalendar {...props} month="2026-10" />);
+    expect(document.querySelector("[data-gc-tooltip]")).toBeNull();
+    rerender(<GcMonthCalendar {...props} month="2026-09" />);
+    expect(document.querySelector("[data-gc-tooltip]")).toBeNull();
   });
 });
 

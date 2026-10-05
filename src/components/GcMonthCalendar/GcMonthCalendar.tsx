@@ -5,6 +5,7 @@ import {
   clampMonth,
   isDateKey,
   isMonthKey,
+  isWeekday,
   monthWeeks,
   parseDateKey,
   toDateKey,
@@ -59,8 +60,10 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
       values,
       today,
       defaultMonth,
+      month,
       minMonth,
       maxMonth,
+      weekStartsOn,
       onMonthChange,
       locale = "en-US",
       renderTooltip,
@@ -73,31 +76,38 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
     // server and browser, so SSR consumers pass `today`.
     const [clockToday] = useState(() => toDateKey(new Date()));
     const todayKey = isDateKey(today) ? today : clockToday;
+    const firstDay = isWeekday(weekStartsOn) ? weekStartsOn : 1;
     // Plain JS callers may pass anything here; draw at most two rings.
     const shownGoals: readonly GcGoal[] = Array.isArray(goals)
       ? goals
           .filter((goal: unknown) => typeof goal === "object" && goal !== null)
           .slice(0, 2)
       : [];
-    const [month, setMonth] = useState(() =>
-      clampMonth(
-        isMonthKey(defaultMonth) ? defaultMonth : todayKey.slice(0, 7),
-        minMonth,
-        maxMonth,
-      ),
+    const [ownMonth, setOwnMonth] = useState(() =>
+      isMonthKey(defaultMonth) ? defaultMonth : todayKey.slice(0, 7),
     );
-    const canGoBack = !isMonthKey(minMonth) || month > minMonth;
-    const canGoForward = !isMonthKey(maxMonth) || month < maxMonth;
+    // A valid `month` prop wins (controlled); otherwise the calendar keeps its own.
+    const shownMonth = clampMonth(
+      isMonthKey(month) ? month : ownMonth,
+      minMonth,
+      maxMonth,
+    );
+    const canGoBack = !isMonthKey(minMonth) || shownMonth > minMonth;
+    const canGoForward = !isMonthKey(maxMonth) || shownMonth < maxMonth;
 
     const [hover, setHover] = useState<{
       key: string;
       cell: HTMLElement;
     } | null>(null);
+    // The hovered cell unmounts without a pointerleave when the month changes, from either side.
+    const [hoverMonth, setHoverMonth] = useState(shownMonth);
+    if (hoverMonth !== shownMonth) {
+      setHoverMonth(shownMonth);
+      setHover(null);
+    }
 
     function showMonth(next: string) {
-      // The hovered cell unmounts without a pointerleave when the keyboard changes the month.
-      setHover(null);
-      setMonth(next);
+      setOwnMonth(next);
       onMonthChange?.(next);
     }
     const titleId = useId();
@@ -113,10 +123,10 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
           month: "long",
           day: "numeric",
         }),
-        weekdays: weekdayNames(locale),
+        weekdays: weekdayNames(locale, firstDay),
         number: new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }),
       }),
-      [locale],
+      [locale, firstDay],
     );
     // Future rings are empty, so by default there is nothing to show for them.
     function defaultTooltip(day: GcDayInfo): ReactNode {
@@ -143,7 +153,7 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
       <div {...rest} ref={ref} className={cn(ROOT, className)}>
         <div className="gcx:flex gcx:items-center gcx:justify-between gcx:gap-2">
           <div id={titleId} role="status" className="gcx:text-lg gcx:font-semibold">
-            {fmt.title.format(parseDateKey(`${month}-01`))}
+            {fmt.title.format(parseDateKey(`${shownMonth}-01`))}
           </div>
           <div className="gcx:flex gcx:gap-1">
             <button
@@ -151,7 +161,7 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
               aria-label="Previous month"
               aria-disabled={!canGoBack || undefined}
               onClick={() => {
-                if (canGoBack) showMonth(addMonths(month, -1));
+                if (canGoBack) showMonth(addMonths(shownMonth, -1));
               }}
               className={NAV_BUTTON}
             >
@@ -162,7 +172,7 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
               aria-label="Next month"
               aria-disabled={!canGoForward || undefined}
               onClick={() => {
-                if (canGoForward) showMonth(addMonths(month, 1));
+                if (canGoForward) showMonth(addMonths(shownMonth, 1));
               }}
               className={NAV_BUTTON}
             >
@@ -189,7 +199,7 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
             </tr>
           </thead>
           <tbody>
-            {monthWeeks(month).map((week, w) => (
+            {monthWeeks(shownMonth, firstDay).map((week, w) => (
               <tr key={w}>
                 {week.map((key, i) => {
                   if (key === null)

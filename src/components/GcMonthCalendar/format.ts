@@ -1,13 +1,14 @@
 import type { DayProgress } from "./progress";
 
-// 1 January 2024 was a Monday.
+// 7 January 2024 was a Sunday, so 7 + firstDay is the first column's weekday.
 export function weekdayNames(
   locale: string,
+  firstDay: number,
 ): { narrow: string; long: string }[] {
   const narrow = new Intl.DateTimeFormat(locale, { weekday: "narrow" });
   const long = new Intl.DateTimeFormat(locale, { weekday: "long" });
   return Array.from({ length: 7 }, (_, i) => {
-    const date = new Date(2024, 0, 1 + i, 12);
+    const date = new Date(2024, 0, 7 + firstDay + i, 12);
     return { narrow: narrow.format(date), long: long.format(date) };
   });
 }

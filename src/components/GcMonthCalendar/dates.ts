@@ -32,10 +32,10 @@ export function isMonthKey(value: unknown): value is string {
   );
 }
 
-// Monday-first weeks of date keys; null pads the first and last week.
-export function monthWeeks(month: string): (string | null)[][] {
+// Weeks of date keys starting on `firstDay` (0 = Sunday); null pads the first and last week.
+export function monthWeeks(month: string, firstDay: number): (string | null)[][] {
   const first = parseDateKey(`${month}-01`);
-  const lead = (first.getDay() + 6) % 7;
+  const lead = (first.getDay() - firstDay + 7) % 7;
   const count = new Date(
     first.getFullYear(),
     first.getMonth() + 1,
@@ -48,6 +48,12 @@ export function monthWeeks(month: string): (string | null)[][] {
   const weeks: (string | null)[][] = [];
   for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
   return weeks;
+}
+
+export function isWeekday(value: unknown): value is 0 | 1 | 2 | 3 | 4 | 5 | 6 {
+  return (
+    typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= 6
+  );
 }
 
 export function addMonths(month: string, n: number): string {

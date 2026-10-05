@@ -38,13 +38,27 @@ export function App() {
       <section>
         <h2>GcMonthCalendar</h2>
 
-        <h3>Two goals (onMonthChange: {month})</h3>
+        <h3>Controlled month ({month}) with a Today button</h3>
+        <button type="button" onClick={() => setMonth("2026-09")}>
+          Today
+        </button>
         <GcCard style={card}>
           <GcMonthCalendar
             goals={GOALS}
             values={VALUES}
             today="2026-09-24"
+            month={month}
             onMonthChange={setMonth}
+          />
+        </GcCard>
+
+        <h3>Weeks start on Sunday</h3>
+        <GcCard style={card}>
+          <GcMonthCalendar
+            goals={GOALS}
+            values={VALUES}
+            today="2026-09-24"
+            weekStartsOn={0}
           />
         </GcCard>
 

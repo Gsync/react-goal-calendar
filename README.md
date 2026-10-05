@@ -52,8 +52,8 @@ Components may add their own `--gc-*` variables; each component's section lists 
 ### GcMonthCalendar
 
 A month of days, each with one or two progress rings: the outer ring for the first goal, the inner
-ring for the second. Weeks start on Monday. Days are read-only; the only controls are the previous
-and next month buttons.
+ring for the second. Weeks start on Monday unless `weekStartsOn` says otherwise. Days are
+read-only; the only controls are the previous and next month buttons.
 
 The calendar draws no card frame; wrap it in `GcCard` for one, or place it in your own card. In your
 own card, set `--gc-card` to the card's background colour: the ring tracks and the tooltip are mixed
@@ -82,17 +82,29 @@ const goals: [GcGoal, GcGoal] = [
 Declare `goals` inline or type it as `[GcGoal]` / `[GcGoal, GcGoal]`. A plain `GcGoal[]` is
 rejected because at most two rings are drawn.
 
-| Prop                    | Type                                             | Default            |
-| ----------------------- | ------------------------------------------------ | ------------------ |
-| `goals`                 | `[GcGoal]` or `[GcGoal, GcGoal]`                 | required           |
-| `values`                | `{ [date: "YYYY-MM-DD"]: { [goalId]: number } }` | `{}`               |
-| `today`                 | `"YYYY-MM-DD"`                                   | current local date |
-| `defaultMonth`          | `"YYYY-MM"`                                      | month of `today`   |
-| `minMonth` / `maxMonth` | `"YYYY-MM"`                                      | unbounded          |
-| `onMonthChange`         | `(month: "YYYY-MM") => void`                     |                    |
-| `locale`                | BCP 47 string                                    | `"en-US"`          |
-| `renderTooltip`         | `(day: GcDayInfo) => ReactNode`, or `null`       | built-in summary   |
-| `className`             | `string`                                         |                    |
+| Prop                    | Type                                             | Default                                        |
+| ----------------------- | ------------------------------------------------ | ---------------------------------------------- |
+| `goals`                 | `[GcGoal]` or `[GcGoal, GcGoal]`                 | required                                       |
+| `values`                | `{ [date: "YYYY-MM-DD"]: { [goalId]: number } }` | `{}`                                           |
+| `today`                 | `"YYYY-MM-DD"`                                   | current local date                             |
+| `month`                 | `"YYYY-MM"` (controlled)                         |                                                |
+| `defaultMonth`          | `"YYYY-MM"`                                      | month of `today` (ignored when `month` is set) |
+| `minMonth` / `maxMonth` | `"YYYY-MM"`                                      | unbounded                                      |
+| `weekStartsOn`          | `0`–`6` (0 = Sunday)                             | `1`                                            |
+| `onMonthChange`         | `(month: "YYYY-MM") => void`                     |                                                |
+| `locale`                | BCP 47 string                                    | `"en-US"`                                      |
+| `renderTooltip`         | `(day: GcDayInfo) => ReactNode`, or `null`       | built-in summary                               |
+| `className`             | `string`                                         |                                                |
+
+**Controlled month.** Pass `month` and update it from `onMonthChange` to own the month, e.g. to
+load data per month or add your own "Today" button:
+
+```tsx
+const [month, setMonth] = useState("2026-09");
+
+<button onClick={() => setMonth("2026-09")}>Today</button>
+<GcMonthCalendar goals={goals} values={values} month={month} onMonthChange={setMonth} />
+```
 
 Other `<div>` props pass through to the root, and `ref` points at it.
 

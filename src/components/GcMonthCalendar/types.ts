@@ -49,15 +49,30 @@ interface GcMonthCalendarOwnProps {
    */
   today?: string;
   /**
-   * Month shown first, as `YYYY-MM`.
+   * Month shown first when `month` isn't set, as `YYYY-MM`.
    * @defaultValue the month of `today`
    */
   defaultMonth?: string;
+  /**
+   * Month shown, as `YYYY-MM`, when your app controls it: update it from `onMonthChange`.
+   * Kept inside `minMonth` / `maxMonth`. Malformed values are ignored.
+   * @example
+   * const [month, setMonth] = useState("2026-09");
+   * <GcMonthCalendar month={month} onMonthChange={setMonth} />
+   */
+  month?: string;
   /** Earliest month the user can navigate to, as `YYYY-MM`. */
   minMonth?: string;
   /** Latest month the user can navigate to, as `YYYY-MM`. */
   maxMonth?: string;
-  /** Called with the new month (`YYYY-MM`) when the user navigates. */
+  /**
+   * First day of the week: 0 = Sunday … 6 = Saturday.
+   * @defaultValue 1 (Monday)
+   */
+  weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
+  /**
+   * Called with the new month (`YYYY-MM`) when the user navigates. With `month`, store it there.
+   */
   onMonthChange?: (month: string) => void;
   /**
    * BCP 47 locale for the month title, weekday names and numbers.
