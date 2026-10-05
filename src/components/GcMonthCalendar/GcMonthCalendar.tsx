@@ -16,10 +16,10 @@ import { dayInfo, dayProgress } from "./progress";
 import type { GcDayInfo, GcGoal, GcMonthCalendarProps } from "./types";
 
 const ROOT =
-  "relative box-border rounded-xl border border-gc-border bg-gc-card p-4 text-gc-fg";
+  "gcx:relative gcx:box-border gcx:rounded-xl gcx:border gcx:border-gc-border gcx:bg-gc-card gcx:p-4 gcx:text-gc-fg";
 
 const NAV_BUTTON =
-  "inline-flex size-8 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-0 text-gc-muted-fg hover:bg-gc-muted hover:text-gc-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gc-primary aria-disabled:cursor-not-allowed aria-disabled:opacity-40 aria-disabled:hover:bg-transparent aria-disabled:hover:text-gc-muted-fg";
+  "gcx:inline-flex gcx:size-8 gcx:cursor-pointer gcx:items-center gcx:justify-center gcx:rounded-md gcx:border-0 gcx:bg-transparent gcx:p-0 gcx:text-gc-muted-fg gcx:hover:bg-gc-muted gcx:hover:text-gc-fg gcx:focus-visible:outline-2 gcx:focus-visible:outline-offset-2 gcx:focus-visible:outline-gc-primary gcx:aria-disabled:cursor-not-allowed gcx:aria-disabled:opacity-40 gcx:aria-disabled:hover:bg-transparent gcx:aria-disabled:hover:text-gc-muted-fg";
 
 // Mirrored under dir="rtl" so "previous" still points toward the start.
 function Chevron({ d }: { d: string }) {
@@ -27,7 +27,7 @@ function Chevron({ d }: { d: string }) {
     <svg
       viewBox="0 0 16 16"
       aria-hidden="true"
-      className="size-4 rtl:-scale-x-100"
+      className="gcx:size-4 gcx:rtl:-scale-x-100"
     >
       <path
         d={d}
@@ -141,11 +141,11 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
 
     return (
       <div {...rest} ref={ref} className={cn(ROOT, className)}>
-        <div className="flex items-center justify-between gap-2">
-          <div id={titleId} role="status" className="text-lg font-semibold">
+        <div className="gcx:flex gcx:items-center gcx:justify-between gcx:gap-2">
+          <div id={titleId} role="status" className="gcx:text-lg gcx:font-semibold">
             {fmt.title.format(parseDateKey(`${month}-01`))}
           </div>
-          <div className="flex gap-1">
+          <div className="gcx:flex gcx:gap-1">
             <button
               type="button"
               aria-label="Previous month"
@@ -172,7 +172,7 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
         </div>
         <table
           aria-labelledby={titleId}
-          className="mt-3 w-full table-fixed border-collapse"
+          className="gcx:mt-3 gcx:w-full gcx:table-fixed gcx:border-collapse"
         >
           <thead>
             <tr>
@@ -180,10 +180,10 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
                 <th
                   key={long}
                   scope="col"
-                  className="p-0 pb-2 text-center text-xs font-medium text-gc-muted-fg"
+                  className="gcx:p-0 gcx:pb-2 gcx:text-center gcx:text-xs gcx:font-medium gcx:text-gc-muted-fg"
                 >
                   <span aria-hidden="true">{narrow}</span>
-                  <span className="sr-only">{long}</span>
+                  <span className="gcx:sr-only">{long}</span>
                 </th>
               ))}
             </tr>
@@ -193,7 +193,7 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
               <tr key={w}>
                 {week.map((key, i) => {
                   if (key === null)
-                    return <td key={`pad-${i}`} className="p-0" />;
+                    return <td key={`pad-${i}`} className="gcx:p-0" />;
                   const date = parseDateKey(key);
                   const isToday = key === todayKey;
                   const isFuture = key > todayKey;
@@ -219,18 +219,18 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
                           current?.key === key ? null : current,
                         )
                       }
-                      className="group p-0 text-center align-top"
+                      className="gcx:group gcx:p-0 gcx:text-center gcx:align-top"
                     >
-                      <span className="sr-only">
+                      <span className="gcx:sr-only">
                         {dayLabel(fmt.date.format(date), progress, fmt.number)}
                       </span>
                       <div
                         aria-hidden="true"
-                        className="flex flex-col items-center gap-1 rounded-lg py-1 group-data-[future]:opacity-50 group-data-[hovered]:bg-gc-muted"
+                        className="gcx:flex gcx:flex-col gcx:items-center gcx:gap-1 gcx:rounded-lg gcx:py-1 gcx:group-data-[future]:opacity-50 gcx:group-data-[hovered]:bg-gc-muted"
                       >
-                        <span className="inline-flex flex-col items-center text-sm tabular-nums text-gc-muted-fg group-data-[complete]:font-bold group-data-[complete]:text-gc-fg group-data-[today]:font-bold group-data-[today]:text-gc-fg">
+                        <span className="gcx:inline-flex gcx:flex-col gcx:items-center gcx:text-sm gcx:tabular-nums gcx:text-gc-muted-fg gcx:group-data-[complete]:font-bold gcx:group-data-[complete]:text-gc-fg gcx:group-data-[today]:font-bold gcx:group-data-[today]:text-gc-fg">
                           {fmt.day.format(date)}
-                          <span className="hidden h-0.5 w-full rounded-full bg-gc-primary group-data-[today]:block" />
+                          <span className="gcx:hidden gcx:h-0.5 gcx:w-full gcx:rounded-full gcx:bg-gc-primary gcx:group-data-[today]:block" />
                         </span>
                         {shownGoals.length > 0 && (
                           <DayRings

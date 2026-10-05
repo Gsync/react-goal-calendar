@@ -3,11 +3,11 @@ import { cn } from "../../lib/cn";
 import type { GcDayInfo } from "./types";
 
 const BOX =
-  "pointer-events-none invisible absolute z-10 box-border w-max max-w-56 rounded-lg border border-gc-border bg-gc-tooltip-bg px-3 py-2 text-start text-xs leading-snug text-gc-tooltip-fg shadow-md motion-safe:transition-opacity motion-safe:duration-150 starting:opacity-0";
+  "gcx:pointer-events-none gcx:invisible gcx:absolute gcx:z-10 gcx:box-border gcx:w-max gcx:max-w-56 gcx:rounded-lg gcx:border gcx:border-gc-border gcx:bg-gc-tooltip-bg gcx:px-3 gcx:py-2 gcx:text-start gcx:text-xs gcx:leading-snug gcx:text-gc-tooltip-fg gcx:shadow-md gcx:motion-safe:transition-opacity gcx:motion-safe:duration-150 gcx:starting:opacity-0";
 const GAP = 4;
 
 // Dots match the rings: outer (first goal), inner (second goal).
-const DOTS = ["bg-gc-ring-1", "bg-gc-ring-2"] as const;
+const DOTS = ["gcx:bg-gc-ring-1", "gcx:bg-gc-ring-2"] as const;
 
 // Measured and placed before paint; writes `style` directly so placing it costs no second render.
 export function DayTooltip({
@@ -65,16 +65,16 @@ export function DefaultTooltip({
 }) {
   return (
     <>
-      <div className="font-semibold">{dateText}</div>
-      <ul className="m-0 mt-1 flex list-none flex-col gap-0.5 p-0">
+      <div className="gcx:font-semibold">{dateText}</div>
+      <ul className="gcx:m-0 gcx:mt-1 gcx:flex gcx:list-none gcx:flex-col gcx:gap-0.5 gcx:p-0">
         {day.goals.map(({ goal, done, target, fraction }, i) => (
-          <li key={i} className="flex items-center gap-2">
-            <span className={cn("size-2 shrink-0 rounded-full", DOTS[i])} />
-            <span className="flex-1">{goal.label}</span>
-            <span className="tabular-nums">
+          <li key={i} className="gcx:flex gcx:items-center gcx:gap-2">
+            <span className={cn("gcx:size-2 gcx:shrink-0 gcx:rounded-full", DOTS[i])} />
+            <span className="gcx:flex-1">{goal.label}</span>
+            <span className="gcx:tabular-nums">
               {`${number.format(done)} / ${number.format(target)}${goal.unit ? ` ${goal.unit}` : ""}`}
             </span>
-            <span className="w-3 text-gc-primary">
+            <span className="gcx:w-3 gcx:text-gc-primary">
               {fraction >= 1 ? "✓" : ""}
             </span>
           </li>

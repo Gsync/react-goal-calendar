@@ -24,10 +24,35 @@ for (const name of ["GcMonthCalendarProps", "GcGoal", "GcDayInfo"]) {
 for (const token of [
   "--gc-default-primary",
   "--gc-default-ring-1",
-  ".stroke-gc-ring-1",
-  ".bg-gc-tooltip-bg",
+  ".gcx\\:stroke-gc-ring-1",
+  ".gcx\\:bg-gc-tooltip-bg",
 ]) {
   if (!css.includes(token)) failures.push(`dist/style.css is missing ${token}`);
+}
+
+// Unprefixed utilities or theme vars would collide with a host app's own Tailwind.
+for (const cls of ["hidden", "flex", "block", "p-4", "text-sm", "rounded-lg", "sr-only"]) {
+  if (css.includes(`.${cls}{`) || css.includes(`.${cls},`)) {
+    failures.push(`dist/style.css has an unprefixed .${cls}`);
+  }
+}
+if (/(^|[{;\s])--(spacing|color-|radius-|text-|font-weight-|leading-)[\w-]*:/m.test(css)) {
+  failures.push("dist/style.css declares an unprefixed Tailwind theme variable");
+}
+if (css.includes("var(--color-")) {
+  failures.push("dist/style.css references an unprefixed --color-* variable");
+}
+// --gc-* is the calendar's own token namespace; Tailwind's theme vars must be --gcx-*.
+if (/--gc-(spacing|color-|radius-|text-|font-|shadow-|leading-|ease-|default-(transition|font|mono))/.test(css)) {
+  failures.push("dist/style.css has a Tailwind theme variable under --gc-*");
+}
+
+// Declared before any layer block, so importing this file first can't reorder the app's layers.
+const order =
+  /@layer\s*properties\s*,\s*theme\s*,\s*base\s*,\s*components\s*,\s*utilities\s*;/.exec(css);
+const firstBlock = /@layer\s+[\w.-]+\s*\{/.exec(css);
+if (!order || (firstBlock && firstBlock.index < order.index)) {
+  failures.push("dist/style.css must declare the full Tailwind layer order before any layer block");
 }
 
 if (failures.length > 0) {

@@ -4,9 +4,11 @@
  *
  * Theme + utilities only, no preflight, so the host app's base styles are
  * left alone. source(none) + @source limits class scanning to src/.
+ * prefix(gcx) makes every utility gcx:<name> and every theme var --gcx-<name>,
+ * so no class or theme var clashes with the host app's own Tailwind, and
+ * --gc-* stays ours. Tailwind's internal --tw-* helpers are shared (same definitions).
  */
-@layer theme, utilities;
-@import "tailwindcss/theme" layer(theme);
+@import "tailwindcss/theme" layer(theme) prefix(gcx);
 @import "tailwindcss/utilities" layer(utilities) source(none);
 @source "./";
 
@@ -16,7 +18,7 @@
  * Tailwind palette vars, never literal colours.
  * `inline` makes utilities embed the var() chain, so it resolves on each
  * element and a nested .dark / [data-theme="dark"] subtree picks it up.
- * Use as bg-gc-card, text-gc-muted-fg, stroke-gc-primary, …
+ * Use as gcx:bg-gc-card, gcx:text-gc-muted-fg, gcx:stroke-gc-primary, …
  */
 @theme inline {
   --color-gc-fg: var(--gc-fg, var(--gc-default-fg));
@@ -58,26 +60,26 @@
 
 @layer theme {
   :root {
-    --gc-default-fg: var(--color-slate-950);
-    --gc-default-muted: var(--color-slate-100);
-    --gc-default-muted-fg: var(--color-slate-500);
-    --gc-default-border: var(--color-slate-200);
-    --gc-default-primary: var(--color-blue-600);
-    --gc-default-card: var(--color-white);
-    --gc-default-ring-1: var(--color-blue-600);
-    --gc-default-ring-2: var(--color-teal-500);
+    --gc-default-fg: var(--gcx-color-slate-950);
+    --gc-default-muted: var(--gcx-color-slate-100);
+    --gc-default-muted-fg: var(--gcx-color-slate-500);
+    --gc-default-border: var(--gcx-color-slate-200);
+    --gc-default-primary: var(--gcx-color-blue-600);
+    --gc-default-card: var(--gcx-color-white);
+    --gc-default-ring-1: var(--gcx-color-blue-600);
+    --gc-default-ring-2: var(--gcx-color-teal-500);
   }
 
   .dark,
   [data-theme="dark"] {
-    --gc-default-fg: var(--color-slate-50);
-    --gc-default-muted: var(--color-slate-800);
-    --gc-default-muted-fg: var(--color-slate-400);
-    --gc-default-border: var(--color-slate-800);
-    --gc-default-primary: var(--color-blue-500);
-    --gc-default-card: var(--color-slate-950);
-    --gc-default-ring-1: var(--color-blue-500);
-    --gc-default-ring-2: var(--color-teal-400);
+    --gc-default-fg: var(--gcx-color-slate-50);
+    --gc-default-muted: var(--gcx-color-slate-800);
+    --gc-default-muted-fg: var(--gcx-color-slate-400);
+    --gc-default-border: var(--gcx-color-slate-800);
+    --gc-default-primary: var(--gcx-color-blue-500);
+    --gc-default-card: var(--gcx-color-slate-950);
+    --gc-default-ring-1: var(--gcx-color-blue-500);
+    --gc-default-ring-2: var(--gcx-color-teal-400);
   }
 
   /* Opt-in OS dark mode. Not automatic: an app whose light mode just removes
@@ -85,14 +87,14 @@
    * with the block above. */
   @media (prefers-color-scheme: dark) {
     [data-gc-theme="system"] {
-      --gc-default-fg: var(--color-slate-50);
-      --gc-default-muted: var(--color-slate-800);
-      --gc-default-muted-fg: var(--color-slate-400);
-      --gc-default-border: var(--color-slate-800);
-      --gc-default-primary: var(--color-blue-500);
-      --gc-default-card: var(--color-slate-950);
-      --gc-default-ring-1: var(--color-blue-500);
-      --gc-default-ring-2: var(--color-teal-400);
+      --gc-default-fg: var(--gcx-color-slate-50);
+      --gc-default-muted: var(--gcx-color-slate-800);
+      --gc-default-muted-fg: var(--gcx-color-slate-400);
+      --gc-default-border: var(--gcx-color-slate-800);
+      --gc-default-primary: var(--gcx-color-blue-500);
+      --gc-default-card: var(--gcx-color-slate-950);
+      --gc-default-ring-1: var(--gcx-color-blue-500);
+      --gc-default-ring-2: var(--gcx-color-teal-400);
     }
   }
 }
