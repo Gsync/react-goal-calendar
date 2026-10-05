@@ -9,6 +9,10 @@ const css = readFileSync("dist/style.css", "utf8");
 if (!js.startsWith('"use client";')) {
   failures.push('dist/index.js must start with "use client";');
 }
+// Left for the consumer's bundler, so dev warnings vanish from production builds.
+if (!js.includes("process.env.NODE_ENV")) {
+  failures.push("dist/index.js must leave process.env.NODE_ENV for the consumer's bundler");
+}
 
 const mod = await import(new URL("../dist/index.js", import.meta.url).href);
 for (const name of ["GcMonthCalendar", "GcCard"]) {

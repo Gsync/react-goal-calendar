@@ -1,4 +1,4 @@
-import { createRef, useState, type ReactNode, type Ref } from "react";
+import { createRef, StrictMode, useState, type ReactNode, type Ref } from "react";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -98,8 +98,11 @@ describe("GcMonthCalendar month grid", () => {
   });
 
   it("falls back to today's month when defaultMonth is malformed", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     renderCalendar({ today: "2026-09-24", defaultMonth: "2026-9" });
     expect(screen.getByRole("status")).toHaveTextContent("Sep 2026");
+    expect(warn).toHaveBeenCalled();
+    vi.restoreAllMocks();
   });
 
   it("shows single-letter weekdays with full names for assistive tech", () => {
@@ -186,9 +189,12 @@ describe("GcMonthCalendar week start", () => {
   });
 
   it("falls back to Monday for an invalid weekStartsOn", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     renderCalendar({ defaultMonth: "2026-09", weekStartsOn: 7 as never });
     expect(screen.getAllByRole("columnheader")[0]).toHaveAccessibleName("Monday");
     expect(weekRows()[0]).toEqual(["", ...days(1, 6)]);
+    expect(warn).toHaveBeenCalled();
+    vi.restoreAllMocks();
   });
 });
 
@@ -235,6 +241,7 @@ describe("GcMonthCalendar today and future", () => {
   });
 
   it("falls back to the local clock when today is missing or malformed", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     vi.useFakeTimers({ toFake: ["Date"] });
     // 22:00 local in America/Santiago is already the 6th in UTC; a UTC-based "today" fails here.
     vi.setSystemTime(new Date(2026, 8, 5, 22, 0));
@@ -249,6 +256,8 @@ describe("GcMonthCalendar today and future", () => {
       "aria-current",
       "date",
     );
+    expect(warn).toHaveBeenCalled();
+    vi.restoreAllMocks();
   });
 });
 
@@ -337,6 +346,7 @@ describe("GcMonthCalendar goal progress", () => {
   });
 
   it("ignores goals beyond the second and survives an empty goal list", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const three = [
       ...GOALS,
       { id: "extra", label: "Extra", target: 1 },
@@ -352,6 +362,25 @@ describe("GcMonthCalendar goal progress", () => {
     const cell = screen.getByRole("cell", { name: "Tuesday, September 1" });
     expect(cell).not.toHaveAttribute("data-complete");
     expect(cell).not.toHaveAttribute("data-empty");
+    expect(warn).toHaveBeenCalled();
+    vi.restoreAllMocks();
+  });
+
+  it("accepts a plain GcGoal[] and draws the first two", () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    // Four goals: the older "ignores goals beyond the second" test already logs the 3-goal warning.
+    const goals: GcGoal[] = [
+      ...GOALS,
+      { id: "extra", label: "Extra", target: 1 },
+      { id: "more", label: "More", target: 1 },
+    ];
+    renderCalendar({ goals });
+    expect(
+      screen.getByRole("cell", {
+        name: "Tuesday, September 1: Jobs 0 of 3, Activity 0 of 2 h",
+      }),
+    ).toBeInTheDocument();
+    vi.restoreAllMocks();
   });
 
   it("ignores malformed date keys and unknown goal ids", () => {
@@ -558,6 +587,7 @@ describe("GcMonthCalendar month bounds", () => {
   });
 
   it("ignores malformed bounds", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     renderCalendar({ minMonth: "2026-9", maxMonth: "soon" });
     expect(
       screen.getByRole("button", { name: "Previous month" }),
@@ -565,6 +595,8 @@ describe("GcMonthCalendar month bounds", () => {
     expect(
       screen.getByRole("button", { name: "Next month" }),
     ).not.toHaveAttribute("aria-disabled");
+    expect(warn).toHaveBeenCalled();
+    vi.restoreAllMocks();
   });
 });
 
@@ -619,8 +651,11 @@ describe("GcMonthCalendar controlled month", () => {
   });
 
   it("uses its own month when the month prop is malformed", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     renderCalendar({ month: "2026-5", defaultMonth: "2026-07" });
     expect(screen.getByRole("status")).toHaveTextContent("Jul 2026");
+    expect(warn).toHaveBeenCalled();
+    vi.restoreAllMocks();
   });
 
   it("closes the tooltip when the parent changes the month, and keeps it closed on return", async () => {
@@ -842,5 +877,112 @@ describe("GcMonthCalendar tooltip", () => {
     await user.hover(dayCell("Tuesday, September 1"));
     expect(tooltip()).toBeNull();
     expect(dayCell("Tuesday, September 1")).not.toHaveAttribute("data-hovered");
+  });
+});
+
+// Each message is logged once per page load, and the module lives for the whole file, so every
+// test here uses a bad value no other test in this file uses.
+describe("GcMonthCalendar development warnings", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllEnvs();
+  });
+  const spyWarn = () => vi.spyOn(console, "warn").mockImplementation(() => {});
+  const P = "[react-goal-calendar] ";
+
+  it("stays silent for valid props", () => {
+    const warn = spyWarn();
+    renderCalendar({ month: "2026-09", minMonth: "2026-01", maxMonth: "2026-12", weekStartsOn: 0 });
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it("warns about goals beyond the second", () => {
+    const warn = spyWarn();
+    const x = { id: "x", label: "X", target: 1 };
+    renderCalendar({ goals: [...GOALS, x, { ...x, id: "y" }, { ...x, id: "z" }] });
+    expect(warn).toHaveBeenCalledWith(`${P}\`goals\` has 5 entries; only the first two are drawn.`);
+  });
+
+  it("names the prop and the expected format for malformed dates", () => {
+    const warn = spyWarn();
+    renderCalendar({ today: "10/05/2026", minMonth: "26-09" });
+    expect(warn).toHaveBeenCalledWith(
+      `${P}\`today\` must be a YYYY-MM-DD date, got "10/05/2026". Using the current local date.`,
+    );
+    expect(warn).toHaveBeenCalledWith(
+      `${P}\`minMonth\` must be a YYYY-MM month, got "26-09". It is ignored.`,
+    );
+  });
+
+  it("warns when minMonth is after maxMonth", () => {
+    const warn = spyWarn();
+    renderCalendar({ minMonth: "2026-10", maxMonth: "2026-09" });
+    expect(warn).toHaveBeenCalledWith(
+      `${P}\`minMonth\` ("2026-10") is after \`maxMonth\` ("2026-09"), so the month can't change.`,
+    );
+  });
+
+  it("warns about an invalid weekStartsOn", () => {
+    const warn = spyWarn();
+    renderCalendar({ weekStartsOn: 9 as never });
+    expect(warn).toHaveBeenCalledWith(
+      `${P}\`weekStartsOn\` must be an integer from 0 (Sunday) to 6 (Saturday), got 9. Using 1 (Monday).`,
+    );
+  });
+
+  it("warns once per problem, not on every render", () => {
+    const warn = spyWarn();
+    const { rerender } = renderCalendar({ today: "soon" });
+    rerender(
+      <GcMonthCalendar goals={GOALS} today="soon" locale="en-US" values={{ "2026-09-01": { jobs: 1 } }} />,
+    );
+    expect(warn).toHaveBeenCalledTimes(1);
+  });
+
+  it("warns once under StrictMode and across calendars", () => {
+    const warn = spyWarn();
+    render(
+      <StrictMode>
+        <GcMonthCalendar goals={GOALS} today="tomorrow" locale="en-US" />
+        <GcMonthCalendar goals={GOALS} today="tomorrow" locale="en-US" />
+      </StrictMode>,
+    );
+    expect(warn).toHaveBeenCalledTimes(1);
+  });
+
+  it("names a value JSON can't print instead of crashing", () => {
+    const warn = spyWarn();
+    const loop: Record<string, unknown> = {};
+    loop.self = loop;
+    renderCalendar({ today: loop as never, weekStartsOn: Number.NaN as never });
+    expect(warn).toHaveBeenCalledWith(
+      `${P}\`today\` must be a YYYY-MM-DD date, got [object Object]. Using the current local date.`,
+    );
+    expect(warn).toHaveBeenCalledWith(
+      `${P}\`weekStartsOn\` must be an integer from 0 (Sunday) to 6 (Saturday), got NaN. Using 1 (Monday).`,
+    );
+  });
+
+  it("does not inspect props in production", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    expect(() => renderCalendar({ weekStartsOn: BigInt(3) as never })).not.toThrow();
+  });
+
+  it("warns when goals is not an array, and counts only goal objects", () => {
+    const warn = spyWarn();
+    const { unmount } = renderCalendar({ goals: undefined as never });
+    expect(warn).toHaveBeenCalledWith(
+      `${P}\`goals\` must be an array of goals, got undefined. No rings are drawn.`,
+    );
+    unmount();
+    renderCalendar({ goals: [null, ...GOALS] as never });
+    expect(warn).toHaveBeenCalledTimes(1);
+  });
+
+  it("stays silent in production", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    const warn = spyWarn();
+    renderCalendar({ today: "someday" });
+    expect(warn).not.toHaveBeenCalled();
   });
 });

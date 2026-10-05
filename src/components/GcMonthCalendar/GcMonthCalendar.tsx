@@ -1,4 +1,11 @@
-import { forwardRef, useId, useMemo, useState, type ReactNode } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useId,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import { cn } from "../../lib/cn";
 import {
   addMonths,
@@ -15,6 +22,7 @@ import { dayLabel, weekdayNames } from "./format";
 import { DayTooltip, DefaultTooltip } from "./DayTooltip";
 import { dayInfo, dayProgress } from "./progress";
 import type { GcDayInfo, GcGoal, GcMonthCalendarProps } from "./types";
+import { propWarnings, warn } from "./warnings";
 
 // No frame: wrap in GcCard for one. `relative` anchors the tooltip.
 const ROOT = "gcx:relative gcx:box-border gcx:text-gc-fg";
@@ -77,10 +85,26 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
     const [clockToday] = useState(() => toDateKey(new Date()));
     const todayKey = isDateKey(today) ? today : clockToday;
     const firstDay = isWeekday(weekStartsOn) ? weekStartsOn : 1;
+    // Joined so the effect re-runs only when the set of problems changes, not on every render.
+    const warnings = propWarnings({
+      goals,
+      today,
+      month,
+      defaultMonth,
+      minMonth,
+      maxMonth,
+      weekStartsOn,
+    }).join("\n");
+    useEffect(() => {
+      if (warnings) for (const message of warnings.split("\n")) warn(message);
+    }, [warnings]);
     // Plain JS callers may pass anything here; draw at most two rings.
     const shownGoals: readonly GcGoal[] = Array.isArray(goals)
       ? goals
-          .filter((goal: unknown) => typeof goal === "object" && goal !== null)
+          .filter(
+            (goal: unknown): boolean =>
+              typeof goal === "object" && goal !== null,
+          )
           .slice(0, 2)
       : [];
     const [ownMonth, setOwnMonth] = useState(() =>

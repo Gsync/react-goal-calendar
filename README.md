@@ -62,7 +62,7 @@ with it.
 ```tsx
 import { GcCard, GcMonthCalendar, type GcGoal } from "react-goal-calendar";
 
-const goals: [GcGoal, GcGoal] = [
+const goals: GcGoal[] = [
   { id: "calls", label: "Calls", target: 20 },
   { id: "emails", label: "Emails", target: 10 },
 ];
@@ -79,12 +79,9 @@ const goals: [GcGoal, GcGoal] = [
 </GcCard>;
 ```
 
-Declare `goals` inline or type it as `[GcGoal]` / `[GcGoal, GcGoal]`. A plain `GcGoal[]` is
-rejected because at most two rings are drawn.
-
 | Prop                    | Type                                             | Default                                        |
 | ----------------------- | ------------------------------------------------ | ---------------------------------------------- |
-| `goals`                 | `[GcGoal]` or `[GcGoal, GcGoal]`                 | required                                       |
+| `goals`                 | `GcGoal[]` (first two drawn)                     | required                                       |
 | `values`                | `{ [date: "YYYY-MM-DD"]: { [goalId]: number } }` | `{}`                                           |
 | `today`                 | `"YYYY-MM-DD"`                                   | current local date                             |
 | `month`                 | `"YYYY-MM"` (controlled)                         |                                                |
@@ -117,6 +114,11 @@ Other `<div>` props pass through to the root, and `ref` points at it.
   accessible text ends in ", upcoming".
 - Each day's accessible text reads like "Tuesday, September 1: Calls 20 of 20, Emails 10 of 10.
   All goals met." (English in this version; dates and numbers follow `locale`).
+
+In development, the calendar logs a `console.warn` for props it has to ignore: a malformed `today`,
+`month`, `defaultMonth`, `minMonth` or `maxMonth`, `minMonth` after `maxMonth`, an invalid
+`weekStartsOn`, a `goals` that isn't an array, or more than two goals. Each message is logged once
+per page load. Production builds log nothing.
 
 Each day `<td>` carries these attributes when they apply, for styling or tests: `data-today` (also
 `aria-current="date"`), `data-future`, `data-complete` (every goal met), `data-empty` (nothing

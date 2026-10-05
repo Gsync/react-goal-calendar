@@ -33,10 +33,11 @@ export interface GcDayInfo {
 
 interface GcMonthCalendarOwnProps {
   /**
-   * One or two goals. The first is the outer ring, the second the inner ring.
+   * The goals to draw: the first is the outer ring, the second the inner ring. Only the first two
+   * are drawn (a development warning says so).
    * @example [{ id: "calls", label: "Calls", target: 20 }, { id: "emails", label: "Emails", target: 10 }]
    */
-  goals: readonly [GcGoal] | readonly [GcGoal, GcGoal];
+  goals: readonly GcGoal[];
   /**
    * Amounts per day, keyed by `YYYY-MM-DD` and then by goal `id`. Missing entries count as 0.
    * @example { "2026-09-01": { calls: 20, emails: 10 } }
