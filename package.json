@@ -3,6 +3,16 @@
   "version": "0.1.0",
   "description": "Presentational React components for goal tracking: progress-ring calendars, summary donuts and streak stats.",
   "license": "MIT",
+  "keywords": [
+    "react",
+    "calendar",
+    "goal-tracker",
+    "habit-tracker",
+    "progress-ring",
+    "streak",
+    "tailwindcss",
+    "component"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Gsync/react-goal-calendar.git"
