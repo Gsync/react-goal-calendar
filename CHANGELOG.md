@@ -1,5 +1,13 @@
 # react-goal-calendar
 
+## 0.3.0
+
+### Minor Changes
+
+- 6e5a244: Add `GcMonthSummary`: a month's goal-hit donut and stat rows, with numbers your app computes per
+  month. Adds the `--gc-success`, `--gc-warning`, `--gc-danger`, `--gc-ring-1-text` and
+  `--gc-ring-2-text` colour variables.
+
 ## 0.2.0
 
 ### Minor Changes
