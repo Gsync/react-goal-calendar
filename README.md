@@ -37,6 +37,9 @@ Every colour is a CSS custom property prefixed `--gc-`, with built-in light and 
 | `--gc-border`   | Borders and dividers          |
 | `--gc-primary`  | Accent and highlights         |
 | `--gc-card`     | Card surfaces                 |
+| `--gc-success`  | Stat row dots                 |
+| `--gc-warning`  | Stat row dots                 |
+| `--gc-danger`   | Stat row dots                 |
 
 Set any of them to override, globally or on a wrapper:
 
@@ -70,6 +73,7 @@ Map the calendar's colours to your shadcn variables once, in your global CSS:
   --gc-card: var(--card);
   --gc-ring-1: var(--chart-1);
   --gc-ring-2: var(--chart-2);
+  --gc-danger: var(--destructive);
 }
 ```
 
@@ -196,6 +200,94 @@ disagree on the date and cause a hydration mismatch.
 | `--gc-ring-2-track` | Inner ring track (default: faded ring 2)  |
 | `--gc-tooltip-bg`   | Tooltip background (default: `--gc-card`) |
 | `--gc-tooltip-fg`   | Tooltip text (default: `--gc-fg`)         |
+
+### GcMonthSummary
+
+A month at a glance: a donut with the share of days each goal was hit, and rows of numbers such as
+streaks. **Your app computes the numbers** and passes them per month, keyed by `YYYY-MM`; the
+component does no maths. A month without an entry shows "—" and no rows, so navigating to a month
+your app hasn't loaded yet never shows another month's numbers.
+
+To keep it on the same month as a calendar, pass one `month` state to both:
+
+```tsx
+import { GcCard, GcMonthCalendar, GcMonthSummary } from "react-goal-calendar";
+
+const [month, setMonth] = useState("2026-09");
+
+<GcCard>
+  <GcMonthSummary
+    rings={goals}
+    data={{
+      "2026-09": {
+        rings: { calls: 0.78, emails: 0.61 },
+        stats: [
+          { label: "Current streak", value: "8 days", tone: "primary" },
+          { label: "Best streak", value: "8 days", tone: "warning" },
+          { label: "Both goals met", value: "10 days", tone: "success" },
+          { label: "Nothing logged", value: "1 day", tone: "danger" },
+        ],
+      },
+    }}
+    month={month}
+    onMonthChange={setMonth}
+    today="2026-09-24"
+  />
+</GcCard>
+<GcCard>
+  <GcMonthCalendar goals={goals} values={values} month={month} onMonthChange={setMonth} />
+</GcCard>;
+```
+
+| Prop                    | Type                                                                       | Default                                        |
+| ----------------------- | -------------------------------------------------------------------------- | ---------------------------------------------- |
+| `rings`                 | `{ id: string; label: string }[]` (first two drawn; `GcGoal[]` fits)       | required                                       |
+| `data`                  | `{ [month: "YYYY-MM"]: { rings?: { [ringId]: number }, stats?: Stat[] } }` | `{}`                                           |
+| `today`                 | `"YYYY-MM-DD"`                                                             | current local date                             |
+| `month`                 | `"YYYY-MM"` (controlled)                                                   |                                                |
+| `defaultMonth`          | `"YYYY-MM"`                                                                | month of `today` (ignored when `month` is set) |
+| `minMonth` / `maxMonth` | `"YYYY-MM"`                                                                | unbounded                                      |
+| `onMonthChange`         | `(month: "YYYY-MM") => void`                                               |                                                |
+| `locale`                | BCP 47 string                                                              | `"en-US"`                                      |
+| `legend`                | `boolean`                                                                  | `true`                                         |
+| `labels`                | `{ previousMonth?, nextMonth?, goalHit?, noData? }`                        | English                                        |
+| `className`             | `string`                                                                   |                                                |
+
+`Stat` is `{ label: ReactNode; value: ReactNode; tone?: "primary" | "success" | "warning" | "danger"
+| "ring-1" | "ring-2" | "muted" }`. Your app writes the text ("8 days"), so plurals and translation
+are yours. `tone` colours the row's dot (default `"muted"`). To name these shapes in your code, use
+`GcMonthSummaryProps["data"]`.
+
+**Ring values are fractions: pass `0.78` for 78%.** The first ring is the outer one, coloured like
+the calendar's first goal. Percentages are rounded to whole numbers in `locale`, but never to 100%
+unless the value is exactly 1, nor to 0% unless it is exactly 0 (0.996 shows "99%", 0.003 shows
+"1%"). A missing or non-numeric value shows an empty ring and "—".
+
+**Legend.** Under the donut, each ring's colour and label. It is the only on-screen key to which
+percentage is which ring; turn it off with `legend={false}` only when the rings are labelled
+elsewhere.
+
+**Layout.** The component sizes itself to its own width: from 18rem (a `GcCard` 320px wide) the
+rows sit to the right of the donut; narrower, they move below it in two columns.
+
+**Accessibility.** The donut and legend are hidden from assistive tech; one visually hidden
+sentence carries the result ("September 2026. Goal hit: Calls 78%, Emails 61%") and is announced
+when the month changes. The rows are a description list, read in order.
+
+In development, the summary logs a `console.warn` for a malformed `today`, `month`, `defaultMonth`,
+`minMonth` or `maxMonth`, `minMonth` after `maxMonth`, a `rings` that isn't an array, more than two
+rings, a `data` key that isn't `YYYY-MM`, and a ring value outside 0–1 (usually `78` passed for
+`0.78`; it is clamped). Production builds log nothing.
+
+The root `<div>` gets `data-empty` when `data` has no entry for the month shown. Other `<div>` props
+pass through to the root, and `ref` points at it. **Server rendering:** pass `today`.
+
+| Variable           | Used for                                                         |
+| ------------------ | ---------------------------------------------------------------- |
+| `--gc-ring-1`      | Outer ring (shared with `GcMonthCalendar`)                       |
+| `--gc-ring-2`      | Inner ring (shared with `GcMonthCalendar`)                       |
+| `--gc-ring-1-text` | Outer ring's percentage (default: ring 1 darkened in light mode) |
+| `--gc-ring-2-text` | Inner ring's percentage (default: ring 2 darkened in light mode) |
 
 ### GcCard
 
