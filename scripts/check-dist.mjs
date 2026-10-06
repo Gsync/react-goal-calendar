@@ -15,11 +15,11 @@ if (!js.includes("process.env.NODE_ENV")) {
 }
 
 const mod = await import(new URL("../dist/index.js", import.meta.url).href);
-for (const name of ["GcMonthCalendar", "GcCard"]) {
+for (const name of ["GcMonthCalendar", "GcCard", "GcMonthSummary"]) {
   if (!mod[name]) failures.push(`dist/index.js does not export ${name}`);
 }
 
-for (const name of ["GcMonthCalendarProps", "GcGoal", "GcDayInfo", "GcCardProps"]) {
+for (const name of ["GcMonthCalendarProps", "GcGoal", "GcDayInfo", "GcCardProps", "GcMonthSummaryProps"]) {
   if (!new RegExp(`\\b${name}\\b`).test(dts)) {
     failures.push(`dist/index.d.ts does not declare ${name}`);
   }
