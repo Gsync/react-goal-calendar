@@ -141,3 +141,113 @@ describe("GcMonthSummary root element", () => {
     expect(root).toHaveAttribute("aria-label", "September goals");
   });
 });
+
+describe("GcMonthSummary donut", () => {
+  it("announces the month and each ring's share", () => {
+    renderSummary();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "September 2026. Goal hit: Jobs 78%, Activity 61%",
+    );
+  });
+
+  it("shows the centre label and both percentages, hidden from assistive tech", () => {
+    const { container } = renderSummary();
+    expect(
+      screen.getByText("78%").closest("[aria-hidden='true']"),
+    ).not.toBeNull();
+    expect(screen.getByText("61%")).toBeInTheDocument();
+    expect(screen.getByText("Goal hit")).toBeInTheDocument();
+    expect(
+      container.querySelector("svg circle")?.closest("[aria-hidden='true']"),
+    ).not.toBeNull();
+  });
+
+  it("never claims 100% or 0% before the ring is full or empty", () => {
+    renderSummary({
+      data: { "2026-09": { rings: { jobs: 0.996, activity: 0.003 } } },
+    });
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Jobs 99%, Activity 1%",
+    );
+  });
+
+  it("shows exactly 100% and 0% at the ends", () => {
+    renderSummary({ data: { "2026-09": { rings: { jobs: 1, activity: 0 } } } });
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Jobs 100%, Activity 0%",
+    );
+  });
+
+  it("shows dashes and no data for a month without an entry", async () => {
+    const user = userEvent.setup();
+    const { container } = renderSummary();
+    await user.click(screen.getByRole("button", { name: "Next month" }));
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "October 2026. Goal hit: no data",
+    );
+    expect(screen.getAllByText("—")).toHaveLength(2);
+    expect(screen.queryByText("78%")).toBeNull();
+    expect(container.firstElementChild).toHaveAttribute("data-empty");
+    // The legend stays, so the layout doesn't jump.
+    expect(screen.getByText("Jobs")).toBeInTheDocument();
+  });
+
+  it("marks only the missing ring when the month has data", () => {
+    const { container } = renderSummary({
+      data: { "2026-09": { rings: { jobs: 0.5 } } },
+    });
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Jobs 50%, Activity no data",
+    );
+    expect(screen.getAllByText("—")).toHaveLength(1);
+    expect(container.firstElementChild).not.toHaveAttribute("data-empty");
+  });
+
+  it("treats NaN and non-numbers as no value", () => {
+    renderSummary({
+      data: {
+        "2026-09": { rings: { jobs: Number.NaN, activity: "0.5" as never } },
+      },
+    });
+    expect(screen.getByRole("status")).toHaveTextContent("Goal hit: no data");
+  });
+
+  it("draws one ring and one percentage for a single ring", () => {
+    renderSummary({ rings: [JOBS] });
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "September 2026. Goal hit: Jobs 78%",
+    );
+    expect(screen.queryByText("61%")).toBeNull();
+  });
+
+  it("draws no donut without rings", () => {
+    const { container } = renderSummary({ rings: [] });
+    expect(container.querySelector("svg circle")).toBeNull();
+    expect(screen.getByRole("status")).toHaveTextContent(/^September 2026$/);
+  });
+
+  it("translates the text and formats percentages for the locale", () => {
+    renderSummary({
+      locale: "de-DE",
+      labels: { goalHit: "Ziel erreicht", noData: "keine Daten" },
+      data: { "2026-09": { rings: { jobs: 0.78 } } },
+    });
+    expect(screen.getByRole("status")).toHaveTextContent(
+      /^September 2026\. Ziel erreicht: Jobs 78\s%, Activity keine Daten$/,
+    );
+  });
+
+  it("announces the new month's numbers after navigating", async () => {
+    const user = userEvent.setup();
+    renderSummary({
+      data: {
+        "2026-09": SEPT,
+        "2026-10": { rings: { jobs: 0.25, activity: 0.5 } },
+      },
+    });
+    await user.click(screen.getByRole("button", { name: "Next month" }));
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "October 2026. Goal hit: Jobs 25%, Activity 50%",
+    );
+  });
+});

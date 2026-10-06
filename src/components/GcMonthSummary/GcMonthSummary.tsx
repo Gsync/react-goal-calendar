@@ -4,6 +4,8 @@ import { parseDateKey } from "../../lib/dates";
 import { MonthHeader } from "../../lib/MonthHeader";
 import { RING_DOTS } from "../../lib/ringDots";
 import { useMonth } from "../../lib/useMonth";
+import { Donut } from "./Donut";
+import { percentText, ringValue } from "./percent";
 import type { GcMonthSummaryProps } from "./types";
 
 // No frame: wrap in GcCard for one. A container, so the layout follows this element's width.
@@ -65,6 +67,24 @@ export const GcMonthSummary = forwardRef<HTMLDivElement, GcMonthSummaryProps>(
           .slice(0, 2)
       : [];
     const monthData = data?.[shownMonth];
+    const values = shownRings.map((ring) =>
+      ringValue(monthData?.rings?.[ring.id]),
+    );
+    const texts = values.map((value) =>
+      value === null ? null : percentText(value, fmt.percent),
+    );
+    const goalHit = labels?.goalHit || "Goal hit";
+    const noData = labels?.noData || "no data";
+    // The donut is aria-hidden; this sentence is its text, announced when the month changes.
+    const monthText = fmt.longTitle.format(firstDay);
+    const status =
+      shownRings.length === 0
+        ? monthText
+        : texts.every((text) => text === null)
+          ? `${monthText}. ${goalHit}: ${noData}`
+          : `${monthText}. ${goalHit}: ${shownRings
+              .map((ring, i) => `${ring.label} ${texts[i] ?? noData}`)
+              .join(", ")}`;
 
     return (
       <div
@@ -82,12 +102,16 @@ export const GcMonthSummary = forwardRef<HTMLDivElement, GcMonthSummaryProps>(
           onNext={goForward}
           labels={labels}
         />
+        <p role="status" className="gcx:sr-only gcx:m-0">
+          {status}
+        </p>
         {shownRings.length > 0 && (
           <div className="gcx:mt-3 gcx:grid gcx:gap-4">
             <div
               aria-hidden="true"
               className="gcx:flex gcx:flex-col gcx:items-center gcx:gap-2"
             >
+              <Donut values={values} texts={texts} centerLabel={goalHit} />
               <ul className="gcx:m-0 gcx:flex gcx:list-none gcx:flex-wrap gcx:justify-center gcx:gap-x-4 gcx:gap-y-1 gcx:p-0 gcx:text-sm gcx:text-gc-muted-fg">
                 {shownRings.map((ring, i) => (
                   <li key={i} className="gcx:flex gcx:items-center gcx:gap-1.5">
