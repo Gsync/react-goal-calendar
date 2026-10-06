@@ -10,7 +10,7 @@ import { cn } from "../../lib/cn";
 import { isWeekday, monthWeeks, parseDateKey } from "../../lib/dates";
 import { MonthHeader } from "../../lib/MonthHeader";
 import { useMonth } from "../../lib/useMonth";
-import { DayRings } from "./DayRings";
+import { Rings } from "../../lib/Rings";
 import { dayLabel, weekdayNames } from "./format";
 import { DayTooltip, DefaultTooltip } from "./DayTooltip";
 import { dayInfo, dayProgress, type DayProgress } from "./progress";
@@ -230,12 +230,16 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
                           <span className="gcx:hidden gcx:h-0.5 gcx:w-full gcx:rounded-full gcx:bg-gc-primary gcx:group-data-[today]:block" />
                         </span>
                         {shownGoals.length > 0 && (
-                          <DayRings
+                          <Rings
                             fractions={
                               progress
                                 ? progress.rings.map((ring) => ring.fraction)
                                 : shownGoals.map(() => 0)
                             }
+                            size={36}
+                            radii={[14.5, 8]}
+                            stroke={5}
+                            className="gcx:mx-auto gcx:block gcx:aspect-square gcx:w-full gcx:max-w-12"
                           />
                         )}
                       </div>
