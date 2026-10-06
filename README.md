@@ -15,7 +15,8 @@ Presentational React components for goal tracking: progress-ring calendars, summ
 npm install react-goal-calendar
 ```
 
-Requires `react` and `react-dom` 18.3+ or 19.
+Requires `react` and `react-dom` 18.3+ or 19, and Node 20+ to build. The stylesheet uses `@property`,
+`color-mix()` and `oklch()`, so browsers need Safari 16.4+, Chrome 111+ or Firefox 128+.
 
 Import the stylesheet once, e.g. in your root layout:
 
@@ -211,7 +212,14 @@ your app hasn't loaded yet never shows another month's numbers.
 To keep it on the same month as a calendar, pass one `month` state to both:
 
 ```tsx
-import { GcCard, GcMonthCalendar, GcMonthSummary } from "react-goal-calendar";
+import { useState } from "react";
+import { GcCard, GcMonthCalendar, GcMonthSummary, type GcGoal } from "react-goal-calendar";
+
+const goals: GcGoal[] = [
+  { id: "calls", label: "Calls", target: 20 },
+  { id: "emails", label: "Emails", target: 10 },
+];
+const values = { "2026-09-01": { calls: 20, emails: 10 } };
 
 const [month, setMonth] = useState("2026-09");
 
@@ -391,7 +399,7 @@ const toDateKey = (date: Date) => dateKey.format(date);
            onMonthChange={setMonth}
            legend
            aria-busy={loading}
-           className={loading ? "opacity-60" : undefined}
+           style={loading ? { opacity: 0.6 } : undefined}
          />
        </GcCard>
      );
