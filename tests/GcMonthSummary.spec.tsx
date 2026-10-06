@@ -143,6 +143,18 @@ describe("GcMonthSummary root element", () => {
 });
 
 describe("GcMonthSummary donut", () => {
+  // jsdom computes no layout, so pin the classes that keep the text inside the 69px hole: the
+  // percent lines set their own line height (--tw-leading doesn't inherit), the label is capped.
+  it("sizes the centre text to fit inside the inner ring", () => {
+    renderSummary();
+    expect(screen.getByText("78%")).toHaveClass("gcx:text-lg/tight");
+    expect(screen.getByText("61%")).toHaveClass("gcx:text-lg/tight");
+    expect(screen.getByText("Goal hit")).toHaveClass(
+      "gcx:max-w-[44px]",
+      "gcx:truncate",
+    );
+  });
+
   it("announces the month and each ring's share", () => {
     renderSummary();
     expect(screen.getByRole("status")).toHaveTextContent(
