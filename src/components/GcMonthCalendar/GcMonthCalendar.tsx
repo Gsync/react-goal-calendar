@@ -16,14 +16,15 @@ import {
   monthWeeks,
   parseDateKey,
   toDateKey,
-} from "./dates";
+} from "../../lib/dates";
 import { DayRings } from "./DayRings";
 import { dayLabel, weekdayNames } from "./format";
 import { DayTooltip, DefaultTooltip } from "./DayTooltip";
 import { dayInfo, dayProgress, type DayProgress } from "./progress";
-import { RING_DOTS } from "./ringDots";
+import { RING_DOTS } from "../../lib/ringDots";
 import type { GcDayInfo, GcGoal, GcMonthCalendarProps } from "./types";
-import { propWarnings, warn } from "./warnings";
+import { propWarnings } from "./warnings";
+import { warn } from "../../lib/warn";
 
 // No frame: wrap in GcCard for one. `relative` anchors the tooltip.
 const ROOT = "gcx:relative gcx:box-border gcx:text-gc-fg";
