@@ -34,6 +34,9 @@ for (const token of [
   "--gc-default-ring-text-mix",
   ".gcx\\:stroke-gc-ring-1",
   ".gcx\\:bg-gc-tooltip-bg",
+  ".gcx\\:bg-gc-success",
+  ".gcx\\:text-gc-ring-1-text",
+  "@container",
 ]) {
   if (!css.includes(token)) failures.push(`dist/style.css is missing ${token}`);
 }

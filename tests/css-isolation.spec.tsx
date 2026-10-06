@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
-import { GcCard, GcMonthCalendar, type GcGoal } from "../src";
+import { GcCard, GcMonthCalendar, GcMonthSummary, type GcGoal } from "../src";
 
 const GOALS: [GcGoal, GcGoal] = [
   { id: "calls", label: "Calls", target: 20 },
@@ -34,6 +34,24 @@ describe("CSS isolation", () => {
       screen.getByRole("cell", { name: /^Tuesday, September 1:/ }),
     );
     expect(document.querySelector("[data-gc-tooltip]")).not.toBeNull();
+    expect(unprefixed(container)).toEqual([]);
+  });
+
+  it("renders only gcx:-prefixed classes in GcMonthSummary", () => {
+    const { container } = render(
+      <GcCard>
+        <GcMonthSummary
+          rings={GOALS}
+          data={{
+            "2026-09": {
+              rings: { calls: 0.5 },
+              stats: [{ label: "Streak", value: "2 days", tone: "success" }],
+            },
+          }}
+          today="2026-09-24"
+        />
+      </GcCard>,
+    );
     expect(unprefixed(container)).toEqual([]);
   });
 });

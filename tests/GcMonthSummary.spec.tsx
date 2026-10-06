@@ -251,3 +251,59 @@ describe("GcMonthSummary donut", () => {
     );
   });
 });
+
+describe("GcMonthSummary stat rows", () => {
+  it("lists each row's label and value in order", () => {
+    renderSummary();
+    expect(screen.getAllByRole("term").map((el) => el.textContent)).toEqual([
+      "Current streak",
+      "Best streak",
+      "Both goals met",
+      "Nothing logged",
+    ]);
+    expect(
+      screen.getAllByRole("definition").map((el) => el.textContent),
+    ).toEqual(["8 days", "8 days", "10 days", "1 day"]);
+  });
+
+  it("renders no list for a month without rows or without an entry", async () => {
+    const user = userEvent.setup();
+    renderSummary({ data: { "2026-09": { rings: { jobs: 1 } } } });
+    expect(screen.queryByRole("term")).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Next month" }));
+    expect(screen.queryByRole("term")).toBeNull();
+  });
+
+  it("accepts React content and falls back to a muted dot for an unknown tone", () => {
+    renderSummary({
+      data: {
+        "2026-09": {
+          stats: [
+            {
+              label: <em>Streak</em>,
+              value: <strong>3</strong>,
+              tone: "pink" as never,
+            },
+          ],
+        },
+      },
+    });
+    expect(screen.getByRole("term")).toHaveTextContent("Streak");
+    expect(screen.getByRole("definition")).toHaveTextContent("3");
+  });
+
+  it("shows rows even without rings", () => {
+    renderSummary({ rings: [] });
+    expect(screen.getAllByRole("term")).toHaveLength(4);
+  });
+
+  // No preflight: the host app may not reset <dl>/<dd> margins (dd indents 40px by default).
+  it("resets native list margins itself", () => {
+    renderSummary();
+    expect(screen.getAllByRole("definition")[0]).toHaveClass("gcx:m-0");
+    expect(screen.getAllByRole("term")[0]).toHaveClass("gcx:m-0");
+    expect(screen.getAllByRole("term")[0]?.closest("dl")).toHaveClass(
+      "gcx:m-0",
+    );
+  });
+});

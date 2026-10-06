@@ -11,6 +11,19 @@ import type { GcMonthSummaryProps } from "./types";
 // No frame: wrap in GcCard for one. A container, so the layout follows this element's width.
 const ROOT = "gcx:@container gcx:relative gcx:box-border gcx:text-gc-fg";
 
+// Full class literals so Tailwind generates them. `muted` uses the muted text colour because the
+// row background is --gc-muted.
+const TONE_DOTS = new Map<string, string>([
+  ["primary", "gcx:bg-gc-primary"],
+  ["success", "gcx:bg-gc-success"],
+  ["warning", "gcx:bg-gc-warning"],
+  ["danger", "gcx:bg-gc-danger"],
+  ["ring-1", "gcx:bg-gc-ring-1"],
+  ["ring-2", "gcx:bg-gc-ring-2"],
+  ["muted", "gcx:bg-gc-muted-fg"],
+]);
+const MUTED_DOT = "gcx:bg-gc-muted-fg";
+
 export const GcMonthSummary = forwardRef<HTMLDivElement, GcMonthSummaryProps>(
   function GcMonthSummary(
     {
@@ -67,6 +80,14 @@ export const GcMonthSummary = forwardRef<HTMLDivElement, GcMonthSummaryProps>(
           .slice(0, 2)
       : [];
     const monthData = data?.[shownMonth];
+    // Plain JS callers may pass anything here; skip entries that aren't objects.
+    const stats =
+      monthData && Array.isArray(monthData.stats)
+        ? monthData.stats.filter(
+            (stat: unknown): boolean =>
+              typeof stat === "object" && stat !== null,
+          )
+        : [];
     const values = shownRings.map((ring) =>
       ringValue(monthData?.rings?.[ring.id]),
     );
@@ -105,27 +126,62 @@ export const GcMonthSummary = forwardRef<HTMLDivElement, GcMonthSummaryProps>(
         <p role="status" className="gcx:sr-only gcx:m-0">
           {status}
         </p>
-        {shownRings.length > 0 && (
-          <div className="gcx:mt-3 gcx:grid gcx:gap-4">
-            <div
-              aria-hidden="true"
-              className="gcx:flex gcx:flex-col gcx:items-center gcx:gap-2"
-            >
-              <Donut values={values} texts={texts} centerLabel={goalHit} />
-              <ul className="gcx:m-0 gcx:flex gcx:list-none gcx:flex-wrap gcx:justify-center gcx:gap-x-4 gcx:gap-y-1 gcx:p-0 gcx:text-sm gcx:text-gc-muted-fg">
-                {shownRings.map((ring, i) => (
-                  <li key={i} className="gcx:flex gcx:items-center gcx:gap-1.5">
-                    <span
-                      className={cn(
-                        "gcx:size-2.5 gcx:shrink-0 gcx:rounded-full",
-                        RING_DOTS[i],
-                      )}
-                    />
-                    {ring.label}
-                  </li>
+        {(shownRings.length > 0 || stats.length > 0) && (
+          // Side by side once the content is 18rem wide (a GcCard of about 320px), else stacked.
+          <div className="gcx:mt-3 gcx:grid gcx:gap-4 gcx:@2xs:grid-cols-[auto_1fr] gcx:@2xs:items-center">
+            {shownRings.length > 0 && (
+              <div
+                aria-hidden="true"
+                className="gcx:flex gcx:flex-col gcx:items-center gcx:gap-2"
+              >
+                <Donut values={values} texts={texts} centerLabel={goalHit} />
+                <ul className="gcx:m-0 gcx:flex gcx:list-none gcx:flex-wrap gcx:justify-center gcx:gap-x-4 gcx:gap-y-1 gcx:p-0 gcx:text-sm gcx:text-gc-muted-fg">
+                  {shownRings.map((ring, i) => (
+                    <li
+                      key={i}
+                      className="gcx:flex gcx:items-center gcx:gap-1.5"
+                    >
+                      <span
+                        className={cn(
+                          "gcx:size-2.5 gcx:shrink-0 gcx:rounded-full",
+                          RING_DOTS[i],
+                        )}
+                      />
+                      {ring.label}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {stats.length > 0 && (
+              <dl
+                className={cn(
+                  "gcx:m-0 gcx:grid gcx:min-w-0 gcx:grid-cols-2 gcx:gap-2 gcx:@2xs:grid-cols-1",
+                  shownRings.length === 0 && "gcx:@2xs:col-span-2",
+                )}
+              >
+                {stats.map((stat, i) => (
+                  <div
+                    key={i}
+                    className="gcx:flex gcx:min-w-0 gcx:flex-col gcx:gap-0.5 gcx:rounded-lg gcx:bg-gc-muted gcx:px-3 gcx:py-2 gcx:@2xs:flex-row gcx:@2xs:items-center gcx:@2xs:justify-between gcx:@2xs:gap-3"
+                  >
+                    <dt className="gcx:m-0 gcx:flex gcx:min-w-0 gcx:items-center gcx:gap-2 gcx:text-sm gcx:text-gc-muted-fg">
+                      <span
+                        aria-hidden="true"
+                        className={cn(
+                          "gcx:size-2.5 gcx:shrink-0 gcx:rounded-sm",
+                          TONE_DOTS.get(stat.tone ?? "muted") ?? MUTED_DOT,
+                        )}
+                      />
+                      {stat.label}
+                    </dt>
+                    <dd className="gcx:m-0 gcx:text-sm gcx:font-semibold gcx:whitespace-nowrap gcx:tabular-nums">
+                      {stat.value}
+                    </dd>
+                  </div>
                 ))}
-              </ul>
-            </div>
+              </dl>
+            )}
           </div>
         )}
       </div>
