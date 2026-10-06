@@ -124,6 +124,15 @@ describe("GcMonthSummary data lookup", () => {
     ).not.toBeNull();
     expect(screen.getByText("Activity")).toBeInTheDocument();
   });
+
+  it("hides the legend when legend is false, keeping the donut", () => {
+    renderSummary({ legend: false });
+    expect(screen.queryByText("Jobs")).toBeNull();
+    expect(screen.getByText("78%")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Jobs 78%, Activity 61%",
+    );
+  });
 });
 
 describe("GcMonthSummary root element", () => {

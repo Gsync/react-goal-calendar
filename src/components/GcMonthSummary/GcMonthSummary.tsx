@@ -38,6 +38,7 @@ export const GcMonthSummary = forwardRef<HTMLDivElement, GcMonthSummaryProps>(
       maxMonth,
       onMonthChange,
       locale = "en-US",
+      legend = true,
       labels,
       className,
       ...rest
@@ -150,22 +151,24 @@ export const GcMonthSummary = forwardRef<HTMLDivElement, GcMonthSummaryProps>(
                 className="gcx:flex gcx:flex-col gcx:items-center gcx:gap-2"
               >
                 <Donut values={values} texts={texts} centerLabel={goalHit} />
-                <ul className="gcx:m-0 gcx:flex gcx:list-none gcx:flex-wrap gcx:justify-center gcx:gap-x-4 gcx:gap-y-1 gcx:p-0 gcx:text-sm gcx:text-gc-muted-fg">
-                  {shownRings.map((ring, i) => (
-                    <li
-                      key={i}
-                      className="gcx:flex gcx:items-center gcx:gap-1.5"
-                    >
-                      <span
-                        className={cn(
-                          "gcx:size-2.5 gcx:shrink-0 gcx:rounded-full",
-                          RING_DOTS[i],
-                        )}
-                      />
-                      {ring.label}
-                    </li>
-                  ))}
-                </ul>
+                {legend && (
+                  <ul className="gcx:m-0 gcx:flex gcx:list-none gcx:flex-wrap gcx:justify-center gcx:gap-x-4 gcx:gap-y-1 gcx:p-0 gcx:text-sm gcx:text-gc-muted-fg">
+                    {shownRings.map((ring, i) => (
+                      <li
+                        key={i}
+                        className="gcx:flex gcx:items-center gcx:gap-1.5"
+                      >
+                        <span
+                          className={cn(
+                            "gcx:size-2.5 gcx:shrink-0 gcx:rounded-full",
+                            RING_DOTS[i],
+                          )}
+                        />
+                        {ring.label}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             )}
             {stats.length > 0 && (

@@ -62,6 +62,12 @@ interface GcMonthSummaryOwnProps {
    * @defaultValue "en-US"
    */
   locale?: string;
+  /**
+   * Show a key under the donut: each ring's colour and label. It is the only on-screen label of
+   * which percentage is which ring.
+   * @defaultValue true
+   */
+  legend?: boolean;
   /** Built-in text, e.g. to translate it. */
   labels?: {
     /** @defaultValue "Previous month" */
