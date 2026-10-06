@@ -36,20 +36,24 @@ interface MonthPropInput {
 const MONTH_PROPS = ["month", "defaultMonth", "minMonth", "maxMonth"] as const;
 
 // Month props every month view shares, described for the developer who passed them.
-export function monthPropWarnings(props: MonthPropInput): string[] {
+// `prefix` names the component, since one module-wide log serves every component on the page.
+export function monthPropWarnings(
+  props: MonthPropInput,
+  prefix = "",
+): string[] {
   const out: string[] = [];
   // Skipped in production, where nothing is logged and an odd value must not cost a crash.
   if (!isDev()) return out;
   if (props.today !== undefined && !isDateKey(props.today)) {
     out.push(
-      `\`today\` must be a YYYY-MM-DD date, got ${show(props.today)}. Using the current local date.`,
+      `${prefix}\`today\` must be a YYYY-MM-DD date, got ${show(props.today)}. Using the current local date.`,
     );
   }
   for (const name of MONTH_PROPS) {
     const value = props[name];
     if (value !== undefined && !isMonthKey(value)) {
       out.push(
-        `\`${name}\` must be a YYYY-MM month, got ${show(value)}. It is ignored.`,
+        `${prefix}\`${name}\` must be a YYYY-MM month, got ${show(value)}. It is ignored.`,
       );
     }
   }
@@ -59,7 +63,7 @@ export function monthPropWarnings(props: MonthPropInput): string[] {
     props.minMonth > props.maxMonth
   ) {
     out.push(
-      `\`minMonth\` ("${props.minMonth}") is after \`maxMonth\` ("${props.maxMonth}"), so the month can't change.`,
+      `${prefix}\`minMonth\` ("${props.minMonth}") is after \`maxMonth\` ("${props.maxMonth}"), so the month can't change.`,
     );
   }
   return out;
