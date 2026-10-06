@@ -267,8 +267,8 @@ unless the value is exactly 1, nor to 0% unless it is exactly 0 (0.996 shows "99
 percentage is which ring; turn it off with `legend={false}` only when the rings are labelled
 elsewhere.
 
-**Layout.** The component sizes itself to its own width: from 18rem (a `GcCard` 320px wide) the
-rows sit to the right of the donut; narrower, they move below it in two columns.
+**Layout.** The component sizes itself to its own width: from 18rem (a `GcCard` at least 322px
+wide) the rows sit to the right of the donut; narrower, they move below it in two columns.
 
 **Accessibility.** The donut and legend are hidden from assistive tech; one visually hidden
 sentence carries the result ("September 2026. Goal hit: Calls 78%, Emails 61%") and is announced
