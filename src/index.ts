@@ -9,3 +9,5 @@ export type {
 } from "./components/GcMonthCalendar/types";
 export { GcCard } from "./components/GcCard/GcCard";
 export type { GcCardProps } from "./components/GcCard/types";
+export { GcMonthSummary } from "./components/GcMonthSummary/GcMonthSummary";
+export type { GcMonthSummaryProps } from "./components/GcMonthSummary/types";

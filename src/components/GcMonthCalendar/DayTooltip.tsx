@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, type ReactNode } from "react";
 import { cn } from "../../lib/cn";
-import { RING_DOTS } from "./ringDots";
+import { RING_DOTS } from "../../lib/ringDots";
 import type { GcDayInfo } from "./types";
 
 const BOX =
