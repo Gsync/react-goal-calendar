@@ -7,16 +7,9 @@ import {
   type ReactNode,
 } from "react";
 import { cn } from "../../lib/cn";
-import {
-  addMonths,
-  clampMonth,
-  isDateKey,
-  isMonthKey,
-  isWeekday,
-  monthWeeks,
-  parseDateKey,
-  toDateKey,
-} from "../../lib/dates";
+import { isWeekday, monthWeeks, parseDateKey } from "../../lib/dates";
+import { MonthHeader } from "../../lib/MonthHeader";
+import { useMonth } from "../../lib/useMonth";
 import { DayRings } from "./DayRings";
 import { dayLabel, weekdayNames } from "./format";
 import { DayTooltip, DefaultTooltip } from "./DayTooltip";
@@ -28,29 +21,6 @@ import { warn } from "../../lib/warn";
 
 // No frame: wrap in GcCard for one. `relative` anchors the tooltip.
 const ROOT = "gcx:relative gcx:box-border gcx:text-gc-fg";
-
-const NAV_BUTTON =
-  "gcx:inline-flex gcx:size-8 gcx:cursor-pointer gcx:items-center gcx:justify-center gcx:rounded-md gcx:border-0 gcx:bg-transparent gcx:p-0 gcx:text-gc-muted-fg gcx:hover:bg-gc-muted gcx:hover:text-gc-fg gcx:focus-visible:outline-2 gcx:focus-visible:outline-offset-2 gcx:focus-visible:outline-gc-primary gcx:aria-disabled:cursor-not-allowed gcx:aria-disabled:opacity-40 gcx:aria-disabled:hover:bg-transparent gcx:aria-disabled:hover:text-gc-muted-fg";
-
-// Mirrored under dir="rtl" so "previous" still points toward the start.
-function Chevron({ d }: { d: string }) {
-  return (
-    <svg
-      viewBox="0 0 16 16"
-      aria-hidden="true"
-      className="gcx:size-4 gcx:rtl:-scale-x-100"
-    >
-      <path
-        d={d}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.75"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
 
 // These render nothing, so they mean "no tooltip" rather than an empty box.
 function hasContent(node: ReactNode): boolean {
@@ -85,10 +55,15 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
     },
     ref,
   ) {
-    // Read the clock once, in an initializer (render must stay pure). It can differ between
-    // server and browser, so SSR consumers pass `today`.
-    const [clockToday] = useState(() => toDateKey(new Date()));
-    const todayKey = isDateKey(today) ? today : clockToday;
+    const { todayKey, shownMonth, canGoBack, canGoForward, goBack, goForward } =
+      useMonth({
+        today,
+        defaultMonth,
+        month,
+        minMonth,
+        maxMonth,
+        onMonthChange,
+      });
     const firstDay = isWeekday(weekStartsOn) ? weekStartsOn : 1;
     // Joined so the effect re-runs only when the set of problems changes, not on every render.
     const warnings = propWarnings({
@@ -112,18 +87,6 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
           )
           .slice(0, 2)
       : [];
-    const [ownMonth, setOwnMonth] = useState(() =>
-      isMonthKey(defaultMonth) ? defaultMonth : todayKey.slice(0, 7),
-    );
-    // A valid `month` prop wins (controlled); otherwise the calendar keeps its own.
-    const shownMonth = clampMonth(
-      isMonthKey(month) ? month : ownMonth,
-      minMonth,
-      maxMonth,
-    );
-    const canGoBack = !isMonthKey(minMonth) || shownMonth > minMonth;
-    const canGoForward = !isMonthKey(maxMonth) || shownMonth < maxMonth;
-
     const [hover, setHover] = useState<{
       key: string;
       cell: HTMLElement;
@@ -135,10 +98,6 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
       setHover(null);
     }
 
-    function showMonth(next: string) {
-      setOwnMonth(next);
-      onMonthChange?.(next);
-    }
     const titleId = useId();
     const fmt = useMemo(
       () => ({
@@ -189,35 +148,16 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
 
     return (
       <div {...rest} ref={ref} className={cn(ROOT, className)}>
-        <div className="gcx:flex gcx:items-center gcx:justify-between gcx:gap-2">
-          <div id={titleId} role="status" className="gcx:text-lg gcx:font-semibold">
-            {fmt.title.format(parseDateKey(`${shownMonth}-01`))}
-          </div>
-          <div className="gcx:flex gcx:gap-1">
-            <button
-              type="button"
-              aria-label={labels?.previousMonth || "Previous month"}
-              aria-disabled={!canGoBack || undefined}
-              onClick={() => {
-                if (canGoBack) showMonth(addMonths(shownMonth, -1));
-              }}
-              className={NAV_BUTTON}
-            >
-              <Chevron d="M10 3 5 8l5 5" />
-            </button>
-            <button
-              type="button"
-              aria-label={labels?.nextMonth || "Next month"}
-              aria-disabled={!canGoForward || undefined}
-              onClick={() => {
-                if (canGoForward) showMonth(addMonths(shownMonth, 1));
-              }}
-              className={NAV_BUTTON}
-            >
-              <Chevron d="m6 3 5 5-5 5" />
-            </button>
-          </div>
-        </div>
+        <MonthHeader
+          title={fmt.title.format(parseDateKey(`${shownMonth}-01`))}
+          titleId={titleId}
+          live
+          canGoBack={canGoBack}
+          canGoForward={canGoForward}
+          onPrevious={goBack}
+          onNext={goForward}
+          labels={labels}
+        />
         <table
           aria-labelledby={titleId}
           className="gcx:mt-3 gcx:w-full gcx:table-fixed gcx:border-collapse"
