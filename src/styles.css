@@ -47,6 +47,27 @@
       var(--gc-card, var(--gc-default-card))
     )
   );
+  --color-gc-success: var(--gc-success, var(--gc-default-success));
+  --color-gc-warning: var(--gc-warning, var(--gc-default-warning));
+  --color-gc-danger: var(--gc-danger, var(--gc-default-danger));
+  /* Ring colour pulled toward the text colour (light mode only, via the mix), so it stays
+   * readable as text and follows a ring override. The chain is inlined like the tracks. */
+  --color-gc-ring-1-text: var(
+    --gc-ring-1-text,
+    color-mix(
+      in oklab,
+      var(--gc-ring-1, var(--gc-default-ring-1)) var(--gc-default-ring-text-mix),
+      var(--gc-fg, var(--gc-default-fg))
+    )
+  );
+  --color-gc-ring-2-text: var(
+    --gc-ring-2-text,
+    color-mix(
+      in oklab,
+      var(--gc-ring-2, var(--gc-default-ring-2)) var(--gc-default-ring-text-mix),
+      var(--gc-fg, var(--gc-default-fg))
+    )
+  );
   /* The tooltip box defaults to the card colours; the chain is inlined like the tracks above. */
   --color-gc-tooltip-bg: var(
     --gc-tooltip-bg,
@@ -68,6 +89,10 @@
     --gc-default-card: var(--gcx-color-white);
     --gc-default-ring-1: var(--gcx-color-blue-600);
     --gc-default-ring-2: var(--gcx-color-teal-500);
+    --gc-default-success: var(--gcx-color-green-600);
+    --gc-default-warning: var(--gcx-color-amber-500);
+    --gc-default-danger: var(--gcx-color-red-500);
+    --gc-default-ring-text-mix: 70%;
   }
 
   .dark,
@@ -80,6 +105,10 @@
     --gc-default-card: var(--gcx-color-slate-950);
     --gc-default-ring-1: var(--gcx-color-blue-500);
     --gc-default-ring-2: var(--gcx-color-teal-400);
+    --gc-default-success: var(--gcx-color-green-500);
+    --gc-default-warning: var(--gcx-color-amber-400);
+    --gc-default-danger: var(--gcx-color-red-400);
+    --gc-default-ring-text-mix: 100%;
   }
 
   /* Opt-in OS dark mode. Not automatic: an app whose light mode just removes
@@ -95,6 +124,10 @@
       --gc-default-card: var(--gcx-color-slate-950);
       --gc-default-ring-1: var(--gcx-color-blue-500);
       --gc-default-ring-2: var(--gcx-color-teal-400);
+      --gc-default-success: var(--gcx-color-green-500);
+      --gc-default-warning: var(--gcx-color-amber-400);
+      --gc-default-danger: var(--gcx-color-red-400);
+      --gc-default-ring-text-mix: 100%;
     }
   }
 }

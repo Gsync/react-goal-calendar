@@ -28,6 +28,10 @@ for (const name of ["GcMonthCalendarProps", "GcGoal", "GcDayInfo", "GcCardProps"
 for (const token of [
   "--gc-default-primary",
   "--gc-default-ring-1",
+  "--gc-default-success",
+  "--gc-default-warning",
+  "--gc-default-danger",
+  "--gc-default-ring-text-mix",
   ".gcx\\:stroke-gc-ring-1",
   ".gcx\\:bg-gc-tooltip-bg",
 ]) {
