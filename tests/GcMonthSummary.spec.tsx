@@ -307,3 +307,60 @@ describe("GcMonthSummary stat rows", () => {
     );
   });
 });
+
+describe("GcMonthSummary development warnings", () => {
+  function warnings(): string[] {
+    return vi.mocked(console.warn).mock.calls.map((call) => String(call[0]));
+  }
+
+  it("warns when a ring value looks like a percent, naming it", () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    renderSummary({ data: { "2026-09": { rings: { jobs: 78 } } } });
+    expect(warnings()).toContainEqual(
+      expect.stringContaining('`data["2026-09"].rings.jobs` is 78'),
+    );
+    expect(screen.getByRole("status")).toHaveTextContent("Jobs 100%");
+    vi.restoreAllMocks();
+  });
+
+  it("warns about a data key that is not a month", () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    renderSummary({ data: { "2026-9": SEPT } });
+    expect(warnings()).toContainEqual(
+      expect.stringContaining('`data` key "2026-9"'),
+    );
+    vi.restoreAllMocks();
+  });
+
+  it("warns about more than two rings and draws two", () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    renderSummary({ rings: [...RINGS, { id: "calls", label: "Calls" }] });
+    expect(warnings()).toContainEqual(
+      expect.stringContaining("`rings` has 3 entries"),
+    );
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Jobs 78%, Activity 61%",
+    );
+    vi.restoreAllMocks();
+  });
+
+  it("shares the month prop warnings with the calendar", () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    renderSummary({ minMonth: "2026-13" });
+    expect(warnings()).toContainEqual(
+      expect.stringContaining(
+        "GcMonthSummary: `minMonth` must be a YYYY-MM month",
+      ),
+    );
+    vi.restoreAllMocks();
+  });
+
+  it("stays silent in production", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    renderSummary({ data: { "2026-09": { rings: { jobs: 61 } } } });
+    expect(spy).not.toHaveBeenCalled();
+    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
+  });
+});

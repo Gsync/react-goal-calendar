@@ -1,12 +1,14 @@
-import { forwardRef, useMemo } from "react";
+import { forwardRef, useEffect, useMemo } from "react";
 import { cn } from "../../lib/cn";
 import { parseDateKey } from "../../lib/dates";
 import { MonthHeader } from "../../lib/MonthHeader";
 import { RING_DOTS } from "../../lib/ringDots";
 import { useMonth } from "../../lib/useMonth";
+import { warn } from "../../lib/warn";
 import { Donut } from "./Donut";
 import { percentText, ringValue } from "./percent";
 import type { GcMonthSummaryProps } from "./types";
+import { summaryWarnings } from "./warnings";
 
 // No frame: wrap in GcCard for one. A container, so the layout follows this element's width.
 const ROOT = "gcx:@container gcx:relative gcx:box-border gcx:text-gc-fg";
@@ -52,6 +54,19 @@ export const GcMonthSummary = forwardRef<HTMLDivElement, GcMonthSummaryProps>(
         onMonthChange,
       },
     );
+    // Joined so the effect re-runs only when the set of problems changes, not on every render.
+    const warnings = summaryWarnings({
+      rings,
+      data,
+      today,
+      month,
+      defaultMonth,
+      minMonth,
+      maxMonth,
+    }).join("\n");
+    useEffect(() => {
+      if (warnings) for (const message of warnings.split("\n")) warn(message);
+    }, [warnings]);
     const fmt = useMemo(
       () => ({
         title: new Intl.DateTimeFormat(locale, {
