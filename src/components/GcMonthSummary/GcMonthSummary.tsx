@@ -144,7 +144,7 @@ export const GcMonthSummary = forwardRef<HTMLDivElement, GcMonthSummaryProps>(
         </p>
         {(shownRings.length > 0 || stats.length > 0) && (
           // Side by side once the content is 18rem wide (a GcCard of about 320px), else stacked.
-          <div className="gcx:mt-3 gcx:grid gcx:gap-4 gcx:@2xs:grid-cols-[auto_1fr] gcx:@2xs:items-center">
+          <div className="gcx:mt-3 gcx:grid gcx:gap-4 gcx:@2xs:gap-x-2 gcx:@2xs:grid-cols-2 gcx:@2xs:items-center">
             {shownRings.length > 0 && (
               <div
                 aria-hidden="true"
@@ -181,7 +181,7 @@ export const GcMonthSummary = forwardRef<HTMLDivElement, GcMonthSummaryProps>(
                 {stats.map((stat, i) => (
                   <div
                     key={i}
-                    className="gcx:flex gcx:min-w-0 gcx:flex-col gcx:gap-0.5 gcx:rounded-lg gcx:bg-gc-muted gcx:px-3 gcx:py-2 gcx:@2xs:flex-row gcx:@2xs:items-center gcx:@2xs:justify-between gcx:@2xs:gap-3"
+                    className="gcx:flex gcx:min-w-0 gcx:flex-wrap gcx:items-center gcx:justify-between gcx:gap-x-3 gcx:gap-y-0.5 gcx:rounded-lg gcx:bg-gc-muted gcx:px-3 gcx:py-2"
                   >
                     <dt className="gcx:m-0 gcx:flex gcx:min-w-0 gcx:items-center gcx:gap-2 gcx:text-sm gcx:text-gc-muted-fg">
                       <span
@@ -191,7 +191,7 @@ export const GcMonthSummary = forwardRef<HTMLDivElement, GcMonthSummaryProps>(
                           TONE_DOTS.get(stat.tone ?? "muted") ?? MUTED_DOT,
                         )}
                       />
-                      {stat.label}
+                      <span className="gcx:truncate">{stat.label}</span>
                     </dt>
                     <dd className="gcx:m-0 gcx:text-sm gcx:font-semibold gcx:whitespace-nowrap gcx:tabular-nums">
                       {stat.value}
