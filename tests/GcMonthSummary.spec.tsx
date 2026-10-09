@@ -1,5 +1,5 @@
 import { createRef, type Ref } from "react";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { GcMonthSummary, type GcGoal, type GcMonthSummaryProps } from "../src";
@@ -383,5 +383,97 @@ describe("GcMonthSummary development warnings", () => {
     expect(spy).not.toHaveBeenCalled();
     vi.unstubAllEnvs();
     vi.restoreAllMocks();
+  });
+});
+
+describe("GcMonthSummary tooltip", () => {
+  // The box is aria-hidden, so it has no role; data-gc-tooltip is its documented hook.
+  const tooltip = () =>
+    document.querySelector<HTMLElement>("[data-gc-tooltip]");
+  const rows = () =>
+    within(tooltip() as HTMLElement).getAllByRole("listitem", {
+      hidden: true,
+    });
+  // The donut is aria-hidden too; its centre label is inside it.
+  const donut = () => screen.getByText("Goal hit");
+
+  it("shows Goal hit, the month and each ring's percentage while the mouse is over the donut", async () => {
+    const user = userEvent.setup();
+    renderSummary({ data: { "2026-09": { rings: { jobs: 1, activity: 0.61 } } } });
+    expect(tooltip()).toBeNull();
+    await user.hover(donut());
+    expect(tooltip()).toHaveAttribute("aria-hidden", "true");
+    expect(tooltip()).toHaveTextContent("Goal hit (Sep 2026)");
+    expect(rows()).toHaveLength(2);
+    expect(rows()[0]).toHaveTextContent("Jobs100%✓");
+    expect(rows()[1]).toHaveTextContent("Activity61%");
+    expect(rows()[1]).not.toHaveTextContent("✓");
+    await user.unhover(donut());
+    expect(tooltip()).toBeNull();
+  });
+
+  it("shows a dash for a ring without a value, and nothing for a month without any", async () => {
+    const user = userEvent.setup();
+    const { rerender } = renderSummary({
+      data: { "2026-09": { rings: { jobs: 0.5 } } },
+    });
+    await user.hover(donut());
+    expect(rows()[1]).toHaveTextContent("Activity—");
+    rerender(
+      <GcMonthSummary rings={RINGS} data={{}} today="2026-09-24" locale="en-US" />,
+    );
+    expect(tooltip()).toBeNull();
+  });
+
+  it("opens on tap, and closes on a second tap or Escape", async () => {
+    const user = userEvent.setup();
+    renderSummary();
+    await user.pointer({ keys: "[TouchA]", target: donut() });
+    expect(tooltip()).toHaveTextContent("Goal hit (Sep 2026)");
+    await user.pointer({ keys: "[TouchA]", target: donut() });
+    expect(tooltip()).toBeNull();
+    await user.pointer({ keys: "[TouchA]", target: donut() });
+    await user.keyboard("{Escape}");
+    expect(tooltip()).toBeNull();
+  });
+
+  it("renders custom content from renderTooltip, and none when it is null", async () => {
+    const user = userEvent.setup();
+    const renderTooltip = vi.fn(() => "Custom");
+    const { rerender } = renderSummary({ renderTooltip });
+    await user.hover(donut());
+    expect(tooltip()).toHaveTextContent("Custom");
+    expect(renderTooltip).toHaveBeenLastCalledWith({
+      month: "2026-09",
+      rings: [
+        { ring: RINGS[0], value: 0.78 },
+        { ring: RINGS[1], value: 0.61 },
+      ],
+    });
+    rerender(
+      <GcMonthSummary
+        rings={RINGS}
+        data={{ "2026-09": SEPT }}
+        today="2026-09-24"
+        renderTooltip={null}
+      />,
+    );
+    expect(tooltip()).toBeNull();
+  });
+
+  it("closes when the rings go away, and stays closed when they return", async () => {
+    const user = userEvent.setup();
+    const props = {
+      data: { "2026-09": SEPT },
+      today: "2026-09-24",
+      renderTooltip: () => "Custom",
+    };
+    const { rerender } = render(<GcMonthSummary rings={RINGS} {...props} />);
+    await user.hover(donut());
+    expect(tooltip()).not.toBeNull();
+    rerender(<GcMonthSummary rings={[]} {...props} />);
+    expect(tooltip()).toBeNull();
+    rerender(<GcMonthSummary rings={RINGS} {...props} />);
+    expect(tooltip()).toBeNull();
   });
 });

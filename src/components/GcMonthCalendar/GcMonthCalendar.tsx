@@ -12,7 +12,9 @@ import { MonthHeader } from "../../lib/MonthHeader";
 import { useMonth } from "../../lib/useMonth";
 import { Rings } from "../../lib/Rings";
 import { dayLabel, weekdayNames } from "./format";
-import { DayTooltip, DefaultTooltip } from "./DayTooltip";
+import { DefaultTooltip } from "./DayTooltip";
+import { hasContent } from "../../lib/hasContent";
+import { Tooltip } from "../../lib/Tooltip";
 import { dayInfo, dayProgress, type DayProgress } from "./progress";
 import { RING_DOTS } from "../../lib/ringDots";
 import type { GcDayInfo, GcGoal, GcMonthCalendarProps } from "./types";
@@ -21,17 +23,6 @@ import { warn } from "../../lib/warn";
 
 // No frame: wrap in GcCard for one. `relative` anchors the tooltip.
 const ROOT = "gcx:relative gcx:box-border gcx:text-gc-fg";
-
-// These render nothing, so they mean "no tooltip" rather than an empty box.
-function hasContent(node: ReactNode): boolean {
-  if (Array.isArray(node)) return node.length > 0;
-  return (
-    node !== null &&
-    node !== undefined &&
-    typeof node !== "boolean" &&
-    node !== ""
-  );
-}
 
 export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
   function GcMonthCalendar(
@@ -267,9 +258,9 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
           </ul>
         )}
         {hover && tooltipKey !== undefined && (
-          <DayTooltip anchor={hover.cell} onDismiss={() => setHover(null)}>
+          <Tooltip anchor={hover.cell} onDismiss={() => setHover(null)}>
             {tooltip}
-          </DayTooltip>
+          </Tooltip>
         )}
       </div>
     );

@@ -281,6 +281,20 @@ export function App() {
           />
         </GcCard>
 
+        <h3>Custom tooltip</h3>
+        <GcCard style={card}>
+          <GcMonthSummary
+            rings={GOALS}
+            data={SUMMARY_DATA}
+            today="2026-09-24"
+            renderTooltip={({ rings }) =>
+              rings
+                .map(({ ring, value }) => `${ring.label}: ${value ?? "none"}`)
+                .join(" · ")
+            }
+          />
+        </GcCard>
+
         <h3>Dark</h3>
         <div className="dark" style={{ background: "#020617", padding: 16 }}>
           <GcCard style={card}>

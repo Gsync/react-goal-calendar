@@ -258,6 +258,7 @@ const [month, setMonth] = useState("2026-09");
 | `onMonthChange`         | `(month: "YYYY-MM") => void`                                               |                                                |
 | `locale`                | BCP 47 string                                                              | `"en-US"`                                      |
 | `legend`                | `boolean`                                                                  | `true`                                         |
+| `renderTooltip`         | `({ month, rings: { ring, value }[] }) => ReactNode`, or `null`            | built-in summary                               |
 | `labels`                | `{ previousMonth?, nextMonth?, goalHit?, noData? }`                        | English                                        |
 | `className`             | `string`                                                                   |                                                |
 
@@ -274,6 +275,14 @@ unless the value is exactly 1, nor to 0% unless it is exactly 0 (0.996 shows "99
 **Legend.** Under the donut, each ring's colour and label. It is the only on-screen key to which
 percentage is which ring; turn it off with `legend={false}` only when the rings are labelled
 elsewhere.
+
+**Tooltip.** While the mouse is over the donut, or after tapping it, a small card headed "Goal hit
+(Sep 2026)" shows each ring's label and percentage, with a ✓ for a ring at 100%. It works like the
+calendar's: it closes on Escape or a tap elsewhere, is hidden from assistive tech, and carries
+`data-gc-tooltip`. Pass `renderTooltip` to change what's inside (it gets the month as `YYYY-MM` and
+each ring with its value from `data`, or `null` when it has none), return `null` to show nothing, or
+pass `renderTooltip={null}` to turn it off. By default a month without any value shows none. It uses
+the calendar's `--gc-tooltip-bg` and `--gc-tooltip-fg`.
 
 **Layout.** The component sizes itself to its own width: from 18rem (a `GcCard` at least 322px
 wide) the rows sit to the right of the donut; narrower, they move below it in two columns.

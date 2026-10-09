@@ -1,3 +1,4 @@
+import type { ComponentPropsWithoutRef } from "react";
 import { cn } from "../../lib/cn";
 import { Rings } from "../../lib/Rings";
 
@@ -10,13 +11,14 @@ export function Donut({
   values,
   texts,
   centerLabel,
+  ...rest
 }: {
   values: readonly (number | null)[];
   texts: readonly (string | null)[];
   centerLabel: string;
-}) {
+} & ComponentPropsWithoutRef<"div">) {
   return (
-    <div className="gcx:relative gcx:size-28 gcx:shrink-0">
+    <div {...rest} className="gcx:relative gcx:size-28 gcx:shrink-0">
       <Rings
         fractions={values.map((value) => value ?? 0)}
         size={112}

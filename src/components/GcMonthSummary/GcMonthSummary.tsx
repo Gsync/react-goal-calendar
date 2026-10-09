@@ -1,16 +1,26 @@
-import { forwardRef, useEffect, useMemo } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import { cn } from "../../lib/cn";
 import { parseDateKey } from "../../lib/dates";
 import { MonthHeader } from "../../lib/MonthHeader";
 import { RING_DOTS } from "../../lib/ringDots";
+import { hasContent } from "../../lib/hasContent";
+import { Tooltip } from "../../lib/Tooltip";
 import { useMonth } from "../../lib/useMonth";
 import { warn } from "../../lib/warn";
 import { Donut } from "./Donut";
+import { DefaultTooltip } from "./MonthTooltip";
 import { percentText, ringValue } from "./percent";
 import type { GcMonthSummaryProps } from "./types";
 import { summaryWarnings } from "./warnings";
 
 // No frame: wrap in GcCard for one. A container, so the layout follows this element's width.
+// `relative` anchors the tooltip.
 const ROOT = "gcx:@container gcx:relative gcx:box-border gcx:text-gc-fg";
 
 // Full class literals so Tailwind generates them. `muted` uses the muted text colour because the
@@ -39,6 +49,7 @@ export const GcMonthSummary = forwardRef<HTMLDivElement, GcMonthSummaryProps>(
       onMonthChange,
       locale = "en-US",
       legend = true,
+      renderTooltip,
       labels,
       className,
       ...rest
@@ -122,6 +133,33 @@ export const GcMonthSummary = forwardRef<HTMLDivElement, GcMonthSummaryProps>(
           : `${monthText}. ${goalHit}: ${shownRings
               .map((ring, i) => `${ring.label} ${texts[i] ?? noData}`)
               .join(", ")}`;
+    const [donut, setDonut] = useState<HTMLElement | null>(null);
+    // Without rings the donut unmounts with no pointerleave; drop the detached anchor.
+    if (donut && shownRings.length === 0) setDonut(null);
+    // A month without values shows dashes, so by default there is nothing to add for it.
+    const defaultTooltip = (): ReactNode =>
+      values.every((value) => value === null) ? null : (
+        <DefaultTooltip
+          title={`${goalHit} (${fmt.title.format(firstDay)})`}
+          rings={shownRings.map((ring, i) => ({
+            label: ring.label,
+            text: texts[i] ?? null,
+            met: values[i] === 1,
+          }))}
+        />
+      );
+    const tooltipFor =
+      renderTooltip === undefined ? defaultTooltip : renderTooltip;
+    const tooltip =
+      donut && tooltipFor
+        ? tooltipFor({
+            month: shownMonth,
+            rings: shownRings.map((ring, i) => ({
+              ring,
+              value: values[i] ?? null,
+            })),
+          })
+        : null;
 
     return (
       <div
@@ -150,7 +188,23 @@ export const GcMonthSummary = forwardRef<HTMLDivElement, GcMonthSummaryProps>(
                 aria-hidden="true"
                 className="gcx:flex gcx:flex-col gcx:items-center gcx:gap-2"
               >
-                <Donut values={values} texts={texts} centerLabel={goalHit} />
+                <Donut
+                  values={values}
+                  texts={texts}
+                  centerLabel={goalHit}
+                  onPointerEnter={(event) => {
+                    if (event.pointerType === "mouse") setDonut(event.currentTarget);
+                  }}
+                  onPointerUp={(event) => {
+                    if (event.pointerType === "mouse") return;
+                    const element = event.currentTarget;
+                    setDonut((current) => (current ? null : element));
+                  }}
+                  onPointerLeave={(event) => {
+                    // Lifting a finger fires pointerleave; only a mouse leaving closes.
+                    if (event.pointerType === "mouse") setDonut(null);
+                  }}
+                />
                 {legend && (
                   <ul className="gcx:m-0 gcx:flex gcx:list-none gcx:flex-wrap gcx:justify-center gcx:gap-x-4 gcx:gap-y-1 gcx:p-0 gcx:text-sm gcx:text-gc-muted-fg">
                     {shownRings.map((ring, i) => (
@@ -201,6 +255,11 @@ export const GcMonthSummary = forwardRef<HTMLDivElement, GcMonthSummaryProps>(
               </dl>
             )}
           </div>
+        )}
+        {donut && hasContent(tooltip) && (
+          <Tooltip anchor={donut} onDismiss={() => setDonut(null)}>
+            {tooltip}
+          </Tooltip>
         )}
       </div>
     );
