@@ -24,7 +24,14 @@ Import the stylesheet once, e.g. in your root layout:
 import "react-goal-calendar/style.css";
 ```
 
-The stylesheet contains no CSS reset (no Tailwind preflight), so your app's base styles are left alone. Components are marked `"use client"` and work in Next.js App Router server components.
+The stylesheet contains no CSS reset (no Tailwind preflight), so your app's base styles are left alone.
+Its rules sit in CSS layers (`theme`, `utilities`), and unlayered CSS always beats layered CSS, so a
+global unlayered rule such as `button { … }` or `td { padding: … }` in your app also restyles the
+components. Put such rules in a layer (e.g. `@layer base`) or scope them to your own markup.
+
+Components are marked `"use client"`, so you can render them from Next.js App Router Server
+Components. Function props (`onMonthChange`, `onSettingsClick`, `renderTooltip`, `formatDayLabel`)
+can't cross from a Server Component, so pass those from a Client Component.
 
 ## Theming
 
@@ -102,6 +109,10 @@ const goals: GcGoal[] = [
   { id: "emails", label: "Emails", target: 10 },
 ];
 
+const openGoalSettings = () => {
+  // Open your goals dialog.
+};
+
 <GcCard>
   <GcMonthCalendar
     goals={goals}
@@ -110,6 +121,8 @@ const goals: GcGoal[] = [
       "2026-09-02": { calls: 8 },
     }}
     today="2026-09-24"
+    legend
+    onSettingsClick={openGoalSettings}
   />
 </GcCard>;
 ```
@@ -166,11 +179,38 @@ const [goalsOpen, setGoalsOpen] = useState(false);
 ```
 
 `onSettingsClick` is a function, so in the Next.js App Router pass it from a Client Component. From
-a Server Component, put a Client Component button in `actions` instead.
+a Server Component, put a Client Component button in `actions` instead:
+
+```tsx
+// refresh-button.tsx
+"use client";
+import { useRouter } from "next/navigation";
+
+export function RefreshButton() {
+  const router = useRouter();
+  return (
+    <button type="button" onClick={() => router.refresh()}>
+      Refresh
+    </button>
+  );
+}
+```
+
+```tsx
+// page.tsx (Server Component): router.refresh() re-runs it, so values are recomputed
+<GcMonthCalendar
+  goals={goals}
+  values={values}
+  today={today}
+  legend
+  actions={<RefreshButton />}
+/>
+```
 
 Other `<div>` props pass through to the root, and `ref` points at it.
 
-`GcGoal` is `{ id: string; label: string; target: number; unit?: string }`.
+`GcGoal` is `{ id: string; label: string; target: number; unit?: string }`. `unit` (e.g. `"h"`)
+follows the amounts in the legend, the tooltip and the accessible text.
 
 - A ring shows `done / target` and is full once the target is reached. The accessible text keeps the
   real amount ("Calls 25 of 20").
@@ -181,7 +221,7 @@ Other `<div>` props pass through to the root, and `ref` points at it.
   All goals met." (English by default; pass `formatDayLabel` and `labels` to translate. Dates and
   numbers follow `locale`). `formatDayLabel` gets the date already formatted but raw numbers: format
   them with one `Intl.NumberFormat` created outside the callback, and check `day.future`, since
-  future days still carry their `values`.
+  future days still carry their `values`. Return `""` to use the built-in text for a day.
 
 In development, the calendar logs a `console.warn` for props it has to ignore: a malformed `today`,
 `month`, `defaultMonth`, `minMonth` or `maxMonth`, `minMonth` after `maxMonth`, an invalid
@@ -190,7 +230,8 @@ per page load. Production builds log nothing.
 
 Each day `<td>` carries these attributes when they apply, for styling or tests: `data-today` (also
 `aria-current="date"`), `data-future`, `data-complete` (every goal met), `data-empty` (nothing
-recorded).
+recorded). `data-complete` and `data-empty` are set on past days and today only, never with
+`data-future`.
 
 **Tooltip.** While the mouse is over a past day or today, or after tapping one, a small card shows
 the date and each goal's `done / target`, with a ✓ for met goals. Pass `renderTooltip` to change
@@ -210,8 +251,8 @@ pass `renderTooltip={null}` to turn it off:
 `GcDayInfo` is `{ date, today, future, complete, goals: { goal, done, target, fraction }[] }`. For
 future days `goals` holds the real `values`, even though their rings draw empty.
 
-The tooltip opens on mouse hover and on tap (touch or pen), closes on Escape or a tap elsewhere,
-and is hidden from assistive tech, because each day's accessible text already has the same
+The tooltip opens on mouse hover and on tap (touch or pen), closes on Escape, a tap elsewhere or a
+second tap on the same day, and is hidden from assistive tech, because each day's accessible text already has the same
 numbers. Keyboard and screen-reader users never see it, so don't put information only there. The
 hovered or tapped day gets `data-hovered` and the card carries `data-gc-tooltip`, for styling.
 
@@ -228,6 +269,11 @@ disagree on the date and cause a hydration mismatch.
 | `--gc-tooltip-fg`   | Tooltip text (default: `--gc-fg`)         |
 
 ### GcMonthSummary
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Gsync/react-goal-calendar/main/.github/assets/goal-summary-dark.png">
+  <img alt="A month summary with a two-ring donut of goal-hit percentages and four stat rows" src="https://raw.githubusercontent.com/Gsync/react-goal-calendar/main/.github/assets/goal-summary-light.png" width="380">
+</picture>
 
 A month at a glance: a donut with the share of days each goal was hit, and rows of numbers such as
 streaks. **Your app computes the numbers** and passes them per month, keyed by `YYYY-MM`; the
@@ -268,7 +314,13 @@ const [month, setMonth] = useState("2026-09");
   />
 </GcCard>
 <GcCard>
-  <GcMonthCalendar goals={goals} values={values} month={month} onMonthChange={setMonth} />
+  <GcMonthCalendar
+    goals={goals}
+    values={values}
+    month={month}
+    onMonthChange={setMonth}
+    today="2026-09-24"
+  />
 </GcCard>;
 ```
 
@@ -289,7 +341,8 @@ const [month, setMonth] = useState("2026-09");
 
 `Stat` is `{ label: ReactNode; value: ReactNode; tone?: "primary" | "success" | "warning" | "danger"
 | "ring-1" | "ring-2" | "muted" }`. Your app writes the text ("8 days"), so plurals and translation
-are yours. `tone` colours the row's dot (default `"muted"`). To name these shapes in your code, use
+are yours. `tone` colours the row's dot (default `"muted"`). A label too long for its row is cut
+off with an ellipsis; keep labels short. To name these shapes in your code, use
 `GcMonthSummaryProps["data"]`.
 
 **Ring values are fractions: pass `0.78` for 78%.** The first ring is the outer one, coloured like
@@ -303,7 +356,7 @@ elsewhere.
 
 **Tooltip.** While the mouse is over the donut, or after tapping it, a small card headed "Goal hit
 (Sep 2026)" shows each ring's label and percentage, with a ✓ for a ring at 100%. It works like the
-calendar's: it closes on Escape or a tap elsewhere, is hidden from assistive tech, and carries
+calendar's: it closes on Escape, a tap elsewhere or a second tap on the donut, is hidden from assistive tech, and carries
 `data-gc-tooltip`. Pass `renderTooltip` to change what's inside (it gets the month as `YYYY-MM` and
 each ring with its value from `data`, or `null` when it has none), return `null` to show nothing, or
 pass `renderTooltip={null}` to turn it off. By default a month without any value shows none. It uses
