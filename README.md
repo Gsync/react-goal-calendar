@@ -87,7 +87,8 @@ The `.dark` selector is listed too so the mapping is re-read inside a dark subtr
 
 A month of days, each with one or two progress rings: the outer ring for the first goal, the inner
 ring for the second. Weeks start on Monday unless `weekStartsOn` says otherwise. Days are
-read-only; the only controls are the previous and next month buttons.
+read-only; the built-in controls are the previous and next month buttons and an optional settings
+button.
 
 The calendar draws no card frame; wrap it in `GcCard` for one, or place it in your own card. In your
 own card, set `--gc-card` to the card's background colour: the ring tracks and the tooltip are mixed
@@ -113,22 +114,24 @@ const goals: GcGoal[] = [
 </GcCard>;
 ```
 
-| Prop                    | Type                                             | Default                                        |
-| ----------------------- | ------------------------------------------------ | ---------------------------------------------- |
-| `goals`                 | `GcGoal[]` (first two drawn)                     | required                                       |
-| `values`                | `{ [date: "YYYY-MM-DD"]: { [goalId]: number } }` | `{}`                                           |
-| `today`                 | `"YYYY-MM-DD"`                                   | current local date                             |
-| `month`                 | `"YYYY-MM"` (controlled)                         |                                                |
-| `defaultMonth`          | `"YYYY-MM"`                                      | month of `today` (ignored when `month` is set) |
-| `minMonth` / `maxMonth` | `"YYYY-MM"`                                      | unbounded                                      |
-| `weekStartsOn`          | `0`–`6` (0 = Sunday)                             | `1`                                            |
-| `onMonthChange`         | `(month: "YYYY-MM") => void`                     |                                                |
-| `locale`                | BCP 47 string                                    | `"en-US"`                                      |
-| `renderTooltip`         | `(day: GcDayInfo) => ReactNode`, or `null`       | built-in summary                               |
-| `legend`                | `boolean`                                        | `false`                                        |
-| `formatDayLabel`        | `(day: GcDayInfo, dateText: string) => string`   | built-in English                               |
-| `labels`                | `{ previousMonth?, nextMonth? }`                 | English                                        |
-| `className`             | `string`                                         |                                                |
+| Prop                    | Type                                                 | Default                                        |
+| ----------------------- | ---------------------------------------------------- | ---------------------------------------------- |
+| `goals`                 | `GcGoal[]` (first two drawn)                         | required                                       |
+| `values`                | `{ [date: "YYYY-MM-DD"]: { [goalId]: number } }`     | `{}`                                           |
+| `today`                 | `"YYYY-MM-DD"`                                       | current local date                             |
+| `month`                 | `"YYYY-MM"` (controlled)                             |                                                |
+| `defaultMonth`          | `"YYYY-MM"`                                          | month of `today` (ignored when `month` is set) |
+| `minMonth` / `maxMonth` | `"YYYY-MM"`                                          | unbounded                                      |
+| `weekStartsOn`          | `0`–`6` (0 = Sunday)                                 | `1`                                            |
+| `onMonthChange`         | `(month: "YYYY-MM") => void`                         |                                                |
+| `locale`                | BCP 47 string                                        | `"en-US"`                                      |
+| `renderTooltip`         | `(day: GcDayInfo) => ReactNode`, or `null`           | built-in summary                               |
+| `legend`                | `boolean`                                            | `false`                                        |
+| `actions`               | `ReactNode`                                          |                                                |
+| `onSettingsClick`       | `() => void` (shows the settings button)             |                                                |
+| `formatDayLabel`        | `(day: GcDayInfo, dateText: string) => string`       | built-in English                               |
+| `labels`                | `{ previousMonth?, nextMonth?, legend?, settings? }` | English                                        |
+| `className`             | `string`                                             |                                                |
 
 **Controlled month.** Pass `month` and update it from `onMonthChange` to own the month, e.g. to
 load data per month or add your own "Today" button:
@@ -140,8 +143,30 @@ const [month, setMonth] = useState("2026-09");
 <GcMonthCalendar goals={goals} values={values} month={month} onMonthChange={setMonth} />
 ```
 
-**Legend.** `legend` shows each goal's ring colour, label and daily target below the grid, so users
-can tell the rings apart without hovering.
+**Legend.** `legend` shows a "Daily goal" caption, then each goal's ring colour, label and daily
+target below the grid, so users can tell the rings apart without hovering and know the numbers are
+targets. Change the caption with `labels.legend`.
+
+**Settings button and actions.** Pass `onSettingsClick` to show a small settings button at the end
+of the legend row (bottom right; bottom left under `dir="rtl"`), e.g. to open your own goals
+dialog. Its accessible name is "Goal settings" (`labels.settings` to change it). For anything else,
+pass your own nodes in `actions`: they sit in the same place, before the settings button, rendered
+as given. Without a legend they get a row of their own.
+
+```tsx
+const [goalsOpen, setGoalsOpen] = useState(false);
+
+<GcMonthCalendar
+  goals={goals}
+  values={values}
+  legend
+  onSettingsClick={() => setGoalsOpen(true)}
+/>
+<GoalsDialog open={goalsOpen} onOpenChange={setGoalsOpen} />
+```
+
+`onSettingsClick` is a function, so in the Next.js App Router pass it from a Client Component. From
+a Server Component, put a Client Component button in `actions` instead.
 
 Other `<div>` props pass through to the root, and `ref` points at it.
 
@@ -423,7 +448,8 @@ Stable (changes are always called out in the changelog, and need a major release
 
 - the `--gc-*` variables listed in this README
 - the `data-*` attributes: `data-today`, `data-future`, `data-complete`, `data-empty`,
-  `data-hovered`, `data-gc-tooltip`
+  `data-hovered`, `data-gc-tooltip`, `data-gc-actions` (the box around `actions` and the settings
+  button)
 
 Not stable, so don't target them: class names (they all start with `gcx:`), element structure, and
 Tailwind's `--gcx-*` variables (`--gcx-spacing`, `--gcx-color-blue-600`).

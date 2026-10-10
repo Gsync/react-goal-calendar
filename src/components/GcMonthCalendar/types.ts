@@ -89,8 +89,23 @@ interface GcMonthCalendarOwnProps {
    * @defaultValue the date and each goal's `done / target`, on past days and today
    */
   renderTooltip?: ((day: GcDayInfo) => ReactNode) | null;
-  /** Show a key below the grid: each goal's ring colour, label and daily target. */
+  /**
+   * Show a key below the grid: a "Daily goal" caption (`labels.legend`), then each goal's ring
+   * colour, label and daily target.
+   */
   legend?: boolean;
+  /**
+   * Your own content at the end of the legend row (bottom right, bottom left under `dir="rtl"`),
+   * e.g. a button that opens your goals dialog. Rendered as given; nothing renders when unset.
+   * @example actions={<button type="button" onClick={openGoals}>Set goals</button>}
+   */
+  actions?: ReactNode;
+  /**
+   * Shows a small settings button at the end of the legend row and calls this when it's pressed,
+   * e.g. to open your goals dialog. There is no button without it.
+   * @example onSettingsClick={() => setGoalsOpen(true)}
+   */
+  onSettingsClick?: () => void;
   /**
    * Accessible text for a day, e.g. to translate it. Gets the day's data and its date already
    * formatted for `locale`. Return "" to use the built-in English text for that day. Check
@@ -100,12 +115,16 @@ interface GcMonthCalendarOwnProps {
    * @defaultValue built-in English, e.g. "Tuesday, September 1: Calls 20 of 20. All goals met."
    */
   formatDayLabel?: (day: GcDayInfo, dateText: string) => string;
-  /** Accessible names of the month buttons. */
+  /** Accessible names of the buttons, and the legend's caption. */
   labels?: {
     /** @defaultValue "Previous month" */
     previousMonth?: string;
     /** @defaultValue "Next month" */
     nextMonth?: string;
+    /** Shown before the legend. @defaultValue "Daily goal" */
+    legend?: string;
+    /** @defaultValue "Goal settings" */
+    settings?: string;
   };
   /** Classes merged last onto the root element. */
   className?: string;

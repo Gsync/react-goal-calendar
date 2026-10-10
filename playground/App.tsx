@@ -86,6 +86,7 @@ const SUMMARY_DATA: GcMonthSummaryProps["data"] = SEPT_SUMMARY
 // One <section> per component, each with a heading and a few prop variations.
 export function App() {
   const [month, setMonth] = useState("2026-09");
+  const [settingsClicks, setSettingsClicks] = useState(0);
   return (
     <main
       style={{
@@ -112,6 +113,17 @@ export function App() {
             month={month}
             onMonthChange={setMonth}
             legend
+          />
+        </GcCard>
+
+        <h3>Settings button (clicked {settingsClicks}×)</h3>
+        <GcCard style={card}>
+          <GcMonthCalendar
+            goals={GOALS}
+            values={VALUES}
+            today="2026-09-24"
+            legend
+            onSettingsClick={() => setSettingsClicks((n) => n + 1)}
           />
         </GcCard>
 

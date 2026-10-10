@@ -17,6 +17,7 @@ import { DefaultTooltip } from "./DayTooltip";
 import { hasContent } from "../../lib/hasContent";
 import { Tooltip } from "../../lib/Tooltip";
 import { dayInfo, dayProgress, type DayProgress } from "./progress";
+import { SettingsButton } from "./SettingsButton";
 import { RING_DOTS } from "../../lib/ringDots";
 import type { GcDayInfo, GcGoal, GcMonthCalendarProps } from "./types";
 import { propWarnings } from "./warnings";
@@ -40,6 +41,8 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
       locale = "en-US",
       renderTooltip,
       legend = false,
+      actions,
+      onSettingsClick,
       formatDayLabel,
       labels,
       className,
@@ -144,6 +147,10 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
           )
         : null;
     const tooltipKey = hasContent(tooltip) ? hover?.key : undefined;
+    const showLegend = legend && shownGoals.length > 0;
+    // Plain JS callers may pass anything here; only a function gets a button.
+    const onSettings = typeof onSettingsClick === "function" ? onSettingsClick : null;
+    const showActions = hasContent(actions) || onSettings !== null;
 
     return (
       <div {...rest} ref={ref} className={cn(ROOT, className)}>
@@ -253,21 +260,45 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
             ))}
           </tbody>
         </table>
-        {legend && shownGoals.length > 0 && (
-          <ul className="gcx:m-0 gcx:mt-3 gcx:flex gcx:list-none gcx:flex-wrap gcx:gap-x-4 gcx:gap-y-1 gcx:p-0 gcx:text-xs gcx:text-gc-muted-fg">
-            {dayProgress(shownGoals, undefined).rings.map(({ goal, target }, i) => (
-              <li key={i} className="gcx:flex gcx:items-center gcx:gap-1.5">
-                <span
-                  aria-hidden="true"
-                  className={cn("gcx:size-2 gcx:shrink-0 gcx:rounded-full", RING_DOTS[i])}
-                />
-                <span className="gcx:text-gc-fg">{goal.label}</span>{" "}
-                <span className="gcx:tabular-nums">
-                  {`${fmt.number.format(target)}${goal.unit ? ` ${goal.unit}` : ""}`}
+        {(showLegend || showActions) && (
+          <div className="gcx:mt-3 gcx:flex gcx:flex-wrap gcx:items-center gcx:gap-x-4 gcx:gap-y-1">
+            {showLegend && (
+              <>
+                <span className="gcx:shrink-0 gcx:text-xs gcx:font-medium gcx:text-gc-muted-fg">
+                  {labels?.legend || "Daily goal"}
                 </span>
-              </li>
-            ))}
-          </ul>
+                <ul className="gcx:m-0 gcx:flex gcx:list-none gcx:flex-wrap gcx:gap-x-4 gcx:gap-y-1 gcx:p-0 gcx:text-xs gcx:text-gc-muted-fg">
+                  {dayProgress(shownGoals, undefined).rings.map(({ goal, target }, i) => (
+                    <li key={i} className="gcx:flex gcx:items-center gcx:gap-1.5">
+                      <span
+                        aria-hidden="true"
+                        className={cn("gcx:size-2 gcx:shrink-0 gcx:rounded-full", RING_DOTS[i])}
+                      />
+                      <span className="gcx:text-gc-fg">{goal.label}</span>{" "}
+                      <span className="gcx:tabular-nums">
+                        {`${fmt.number.format(target)}${goal.unit ? ` ${goal.unit}` : ""}`}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+            {showActions && (
+              // The legend wraps inside its own box; the actions keep their size at the row's end.
+              <div
+                data-gc-actions=""
+                className="gcx:ms-auto gcx:flex gcx:shrink-0 gcx:items-center gcx:gap-1"
+              >
+                {actions}
+                {onSettings && (
+                  <SettingsButton
+                    label={labels?.settings || "Goal settings"}
+                    onClick={onSettings}
+                  />
+                )}
+              </div>
+            )}
+          </div>
         )}
         {hover && tooltipKey !== undefined && (
           <Tooltip anchor={hover.cell} onDismiss={() => setHover(null)}>

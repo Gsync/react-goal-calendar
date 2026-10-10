@@ -27,6 +27,7 @@ describe("CSS isolation", () => {
           today="2026-09-24"
           locale="en-US"
           legend
+          onSettingsClick={() => {}}
         />
       </GcCard>,
     );
