@@ -6,6 +6,10 @@ Presentational React components for goal tracking: progress-ring calendars, summ
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Gsync/react-goal-calendar/main/.github/assets/calendar-dark.png">
   <img alt="A month calendar with progress rings for each day" src="https://raw.githubusercontent.com/Gsync/react-goal-calendar/main/.github/assets/calendar-light.png" width="380">
 </picture>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Gsync/react-goal-calendar/main/.github/assets/goal-summary-dark.png">
+  <img alt="A month summary with a two-ring donut of goal-hit percentages and four stat rows" src="https://raw.githubusercontent.com/Gsync/react-goal-calendar/main/.github/assets/goal-summary-light.png" width="380">
+</picture>
 
 **[Live demo](https://gsync.github.io/react-goal-calendar/)**
 
