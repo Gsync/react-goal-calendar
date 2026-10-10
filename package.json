@@ -1,6 +1,6 @@
 {
   "name": "react-goal-calendar",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Presentational React components for goal tracking: progress-ring calendars, summary donuts and streak stats.",
   "license": "MIT",
   "keywords": [

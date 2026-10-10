@@ -1,5 +1,17 @@
 # react-goal-calendar
 
+## 0.4.0
+
+### Minor Changes
+
+- 9d51701: GcMonthCalendar: the legend now starts with a "Daily goal" caption (change it with `labels.legend`). Pass `onSettingsClick` to show a small settings button at the end of the legend row, or put your own controls there with the new `actions` prop. Their box carries `data-gc-actions`.
+- 7467f23: GcMonthSummary: hovering or tapping the donut shows a tooltip with the month and each ring's percentage, like GcMonthCalendar's day tooltip. Customize it with the new `renderTooltip` prop, or pass `renderTooltip={null}` to turn it off.
+
+### Patch Changes
+
+- 50b14c4: GcMonthCalendar and GcMonthSummary announce the month only when their own arrows change it. A calendar and a summary synced through `month` no longer both announce every change, and a `month` set by your app is no longer announced.
+- edfcd22: GcMonthSummary: stat labels no longer overlap their values. Labels stay on one line (truncated if needed), the value moves under the label when a tile is too narrow, and in the side-by-side layout the ring and the stats each get half the width.
+
 ## 0.3.0
 
 ### Minor Changes
