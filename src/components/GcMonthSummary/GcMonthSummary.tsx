@@ -10,6 +10,7 @@ import { parseDateKey } from "../../lib/dates";
 import { MonthHeader } from "../../lib/MonthHeader";
 import { RING_DOTS } from "../../lib/ringDots";
 import { hasContent } from "../../lib/hasContent";
+import { LiveText } from "../../lib/LiveText";
 import { Tooltip } from "../../lib/Tooltip";
 import { useMonth } from "../../lib/useMonth";
 import { warn } from "../../lib/warn";
@@ -56,16 +57,15 @@ export const GcMonthSummary = forwardRef<HTMLDivElement, GcMonthSummaryProps>(
     },
     ref,
   ) {
-    const { shownMonth, canGoBack, canGoForward, goBack, goForward } = useMonth(
-      {
+    const { shownMonth, announce, canGoBack, canGoForward, goBack, goForward } =
+      useMonth({
         today,
         defaultMonth,
         month,
         minMonth,
         maxMonth,
         onMonthChange,
-      },
-    );
+      });
     // Joined so the effect re-runs only when the set of problems changes, not on every render.
     const warnings = summaryWarnings({
       rings,
@@ -123,7 +123,7 @@ export const GcMonthSummary = forwardRef<HTMLDivElement, GcMonthSummaryProps>(
     );
     const goalHit = labels?.goalHit || "Goal hit";
     const noData = labels?.noData || "no data";
-    // The donut is aria-hidden; this sentence is its text, announced when the month changes.
+    // The donut is aria-hidden; this sentence is its text, announced when our buttons change month.
     const monthText = fmt.longTitle.format(firstDay);
     const status =
       shownRings.length === 0
@@ -170,15 +170,14 @@ export const GcMonthSummary = forwardRef<HTMLDivElement, GcMonthSummaryProps>(
       >
         <MonthHeader
           title={fmt.title.format(firstDay)}
-          live={false}
           canGoBack={canGoBack}
           canGoForward={canGoForward}
           onPrevious={goBack}
           onNext={goForward}
           labels={labels}
         />
-        <p role="status" className="gcx:sr-only gcx:m-0">
-          {status}
+        <p className="gcx:sr-only gcx:m-0">
+          <LiveText text={status} live={announce} />
         </p>
         {(shownRings.length > 0 || stats.length > 0) && (
           // Side by side once the content is 18rem wide (a GcCard of about 320px), else stacked.

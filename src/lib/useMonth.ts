@@ -37,11 +37,16 @@ export function useMonth({
     minMonth,
     maxMonth,
   );
+  // The month our own buttons moved to. Only that change is announced: when a parent syncs two
+  // views, the one whose button was pressed speaks, and a parent's own month change stays silent.
+  const [navMonth, setNavMonth] = useState<string | null>(null);
+  if (navMonth !== null && navMonth !== shownMonth) setNavMonth(null);
   const canGoBack = !isMonthKey(minMonth) || shownMonth > minMonth;
   const canGoForward = !isMonthKey(maxMonth) || shownMonth < maxMonth;
 
   function showMonth(next: string) {
     setOwnMonth(next);
+    setNavMonth(next);
     onMonthChange?.(next);
   }
 
@@ -50,6 +55,7 @@ export function useMonth({
     shownMonth,
     canGoBack,
     canGoForward,
+    announce: navMonth === shownMonth,
     goBack: () => {
       if (canGoBack) showMonth(addMonths(shownMonth, -1));
     },

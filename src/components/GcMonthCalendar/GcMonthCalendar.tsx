@@ -8,6 +8,7 @@ import {
 } from "react";
 import { cn } from "../../lib/cn";
 import { isWeekday, monthWeeks, parseDateKey } from "../../lib/dates";
+import { LiveText } from "../../lib/LiveText";
 import { MonthHeader } from "../../lib/MonthHeader";
 import { useMonth } from "../../lib/useMonth";
 import { Rings } from "../../lib/Rings";
@@ -46,15 +47,22 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
     },
     ref,
   ) {
-    const { todayKey, shownMonth, canGoBack, canGoForward, goBack, goForward } =
-      useMonth({
-        today,
-        defaultMonth,
-        month,
-        minMonth,
-        maxMonth,
-        onMonthChange,
-      });
+    const {
+      todayKey,
+      shownMonth,
+      announce,
+      canGoBack,
+      canGoForward,
+      goBack,
+      goForward,
+    } = useMonth({
+      today,
+      defaultMonth,
+      month,
+      minMonth,
+      maxMonth,
+      onMonthChange,
+    });
     const firstDay = isWeekday(weekStartsOn) ? weekStartsOn : 1;
     // Joined so the effect re-runs only when the set of problems changes, not on every render.
     const warnings = propWarnings({
@@ -140,9 +148,13 @@ export const GcMonthCalendar = forwardRef<HTMLDivElement, GcMonthCalendarProps>(
     return (
       <div {...rest} ref={ref} className={cn(ROOT, className)}>
         <MonthHeader
-          title={fmt.title.format(parseDateKey(`${shownMonth}-01`))}
+          title={
+            <LiveText
+              text={fmt.title.format(parseDateKey(`${shownMonth}-01`))}
+              live={announce}
+            />
+          }
           titleId={titleId}
-          live
           canGoBack={canGoBack}
           canGoForward={canGoForward}
           onPrevious={goBack}

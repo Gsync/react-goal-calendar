@@ -289,7 +289,9 @@ wide) the rows sit to the right of the donut; narrower, they move below it in tw
 
 **Accessibility.** The donut and legend are hidden from assistive tech; one visually hidden
 sentence carries the result ("September 2026. Goal hit: Calls 78%, Emails 61%") and is announced
-when the month changes. The rows are a description list, read in order.
+when its own arrows change the month. A `month` set by your app is not announced, so a summary
+synced with a calendar doesn't repeat the month the calendar just spoke. The rows are a description
+list, read in order.
 
 In development, the summary logs a `console.warn` for a malformed `today`, `month`, `defaultMonth`,
 `minMonth` or `maxMonth`, `minMonth` after `maxMonth`, a `rings` that isn't an array, more than two

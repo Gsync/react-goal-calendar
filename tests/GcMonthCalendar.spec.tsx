@@ -83,24 +83,24 @@ describe("GcMonthCalendar month grid", () => {
 
   it("titles the month and labels the table with it", () => {
     renderCalendar({ defaultMonth: "2026-09" });
-    expect(screen.getByRole("status")).toHaveTextContent("Sep 2026");
-    expect(screen.getByRole("table", { name: "Sep 2026" })).toBeInTheDocument();
+    expect(screen.getByText("Sep 2026")).toBeInTheDocument();
+    expect(screen.getByRole("table")).toHaveAccessibleName("Sep 2026");
   });
 
   it("formats the title with the locale", () => {
     renderCalendar({ defaultMonth: "2026-09", locale: "en-GB" });
-    expect(screen.getByRole("status")).toHaveTextContent("Sept 2026");
+    expect(screen.getByRole("table")).toHaveAccessibleName("Sept 2026");
   });
 
   it("shows the month of today by default", () => {
     renderCalendar({ today: "2027-02-10" });
-    expect(screen.getByRole("status")).toHaveTextContent("Feb 2027");
+    expect(screen.getByRole("table")).toHaveAccessibleName("Feb 2027");
   });
 
   it("falls back to today's month when defaultMonth is malformed", () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     renderCalendar({ today: "2026-09-24", defaultMonth: "2026-9" });
-    expect(screen.getByRole("status")).toHaveTextContent("Sep 2026");
+    expect(screen.getByRole("table")).toHaveAccessibleName("Sep 2026");
     expect(warn).toHaveBeenCalled();
     vi.restoreAllMocks();
   });
@@ -552,7 +552,7 @@ describe("GcMonthCalendar navigation", () => {
         defaultMonth="2027-01"
       />,
     );
-    expect(screen.getByRole("status")).toHaveTextContent("Sep 2026");
+    expect(screen.getByRole("table")).toHaveAccessibleName("Sep 2026");
   });
 });
 
@@ -580,10 +580,10 @@ describe("GcMonthCalendar month bounds", () => {
       defaultMonth: "2026-01",
       minMonth: "2026-06",
     });
-    expect(screen.getByRole("status")).toHaveTextContent("Jun 2026");
+    expect(screen.getByRole("table")).toHaveAccessibleName("Jun 2026");
     unmount();
     renderCalendar({ defaultMonth: "2027-05", maxMonth: "2026-12" });
-    expect(screen.getByRole("status")).toHaveTextContent("Dec 2026");
+    expect(screen.getByRole("table")).toHaveAccessibleName("Dec 2026");
   });
 
   it("ignores malformed bounds", () => {
@@ -605,10 +605,10 @@ describe("GcMonthCalendar controlled month", () => {
     const user = userEvent.setup();
     const onMonthChange = vi.fn();
     renderCalendar({ month: "2026-05", onMonthChange });
-    expect(screen.getByRole("status")).toHaveTextContent("May 2026");
+    expect(screen.getByRole("table")).toHaveAccessibleName("May 2026");
     await user.click(screen.getByRole("button", { name: "Next month" }));
     expect(onMonthChange).toHaveBeenLastCalledWith("2026-06");
-    expect(screen.getByRole("status")).toHaveTextContent("May 2026");
+    expect(screen.getByRole("table")).toHaveAccessibleName("May 2026");
   });
 
   it("follows a parent that stores the reported month", async () => {
@@ -635,12 +635,19 @@ describe("GcMonthCalendar controlled month", () => {
     await user.click(screen.getByRole("button", { name: "Next month" }));
     expect(screen.getByRole("status")).toHaveTextContent("Nov 2026");
     await user.click(screen.getByRole("button", { name: "Today" }));
-    expect(screen.getByRole("status")).toHaveTextContent("Sep 2026");
+    expect(screen.getByRole("table")).toHaveAccessibleName("Sep 2026");
+    // The parent changed the month, not our buttons: nothing to announce.
+    expect(screen.getByRole("status")).toBeEmptyDOMElement();
+  });
+
+  it("announces nothing on mount", () => {
+    renderCalendar();
+    expect(screen.getByRole("status")).toBeEmptyDOMElement();
   });
 
   it("keeps a controlled month inside minMonth and maxMonth", () => {
     renderCalendar({ month: "2027-03", minMonth: "2026-06", maxMonth: "2026-12" });
-    expect(screen.getByRole("status")).toHaveTextContent("Dec 2026");
+    expect(screen.getByRole("table")).toHaveAccessibleName("Dec 2026");
     expect(screen.getByRole("button", { name: "Next month" })).toHaveAttribute(
       "aria-disabled",
       "true",
@@ -653,7 +660,7 @@ describe("GcMonthCalendar controlled month", () => {
   it("uses its own month when the month prop is malformed", () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     renderCalendar({ month: "2026-5", defaultMonth: "2026-07" });
-    expect(screen.getByRole("status")).toHaveTextContent("Jul 2026");
+    expect(screen.getByRole("table")).toHaveAccessibleName("Jul 2026");
     expect(warn).toHaveBeenCalled();
     vi.restoreAllMocks();
   });
