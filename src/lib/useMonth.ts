@@ -37,11 +37,19 @@ export function useMonth({
     minMonth,
     maxMonth,
   );
+  // Our buttons' target month; only it is announced, even if a controlled parent applies it later.
+  const [navMonth, setNavMonth] = useState<string | null>(null);
+  const [lastMonth, setLastMonth] = useState(shownMonth);
+  if (lastMonth !== shownMonth) {
+    setLastMonth(shownMonth);
+    if (navMonth !== shownMonth) setNavMonth(null);
+  }
   const canGoBack = !isMonthKey(minMonth) || shownMonth > minMonth;
   const canGoForward = !isMonthKey(maxMonth) || shownMonth < maxMonth;
 
   function showMonth(next: string) {
     setOwnMonth(next);
+    setNavMonth(next);
     onMonthChange?.(next);
   }
 
@@ -50,6 +58,7 @@ export function useMonth({
     shownMonth,
     canGoBack,
     canGoForward,
+    announce: navMonth === shownMonth,
     goBack: () => {
       if (canGoBack) showMonth(addMonths(shownMonth, -1));
     },

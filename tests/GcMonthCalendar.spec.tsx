@@ -83,24 +83,24 @@ describe("GcMonthCalendar month grid", () => {
 
   it("titles the month and labels the table with it", () => {
     renderCalendar({ defaultMonth: "2026-09" });
-    expect(screen.getByRole("status")).toHaveTextContent("Sep 2026");
-    expect(screen.getByRole("table", { name: "Sep 2026" })).toBeInTheDocument();
+    expect(screen.getByText("Sep 2026")).toBeInTheDocument();
+    expect(screen.getByRole("table")).toHaveAccessibleName("Sep 2026");
   });
 
   it("formats the title with the locale", () => {
     renderCalendar({ defaultMonth: "2026-09", locale: "en-GB" });
-    expect(screen.getByRole("status")).toHaveTextContent("Sept 2026");
+    expect(screen.getByRole("table")).toHaveAccessibleName("Sept 2026");
   });
 
   it("shows the month of today by default", () => {
     renderCalendar({ today: "2027-02-10" });
-    expect(screen.getByRole("status")).toHaveTextContent("Feb 2027");
+    expect(screen.getByRole("table")).toHaveAccessibleName("Feb 2027");
   });
 
   it("falls back to today's month when defaultMonth is malformed", () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     renderCalendar({ today: "2026-09-24", defaultMonth: "2026-9" });
-    expect(screen.getByRole("status")).toHaveTextContent("Sep 2026");
+    expect(screen.getByRole("table")).toHaveAccessibleName("Sep 2026");
     expect(warn).toHaveBeenCalled();
     vi.restoreAllMocks();
   });
@@ -552,7 +552,7 @@ describe("GcMonthCalendar navigation", () => {
         defaultMonth="2027-01"
       />,
     );
-    expect(screen.getByRole("status")).toHaveTextContent("Sep 2026");
+    expect(screen.getByRole("table")).toHaveAccessibleName("Sep 2026");
   });
 });
 
@@ -580,10 +580,10 @@ describe("GcMonthCalendar month bounds", () => {
       defaultMonth: "2026-01",
       minMonth: "2026-06",
     });
-    expect(screen.getByRole("status")).toHaveTextContent("Jun 2026");
+    expect(screen.getByRole("table")).toHaveAccessibleName("Jun 2026");
     unmount();
     renderCalendar({ defaultMonth: "2027-05", maxMonth: "2026-12" });
-    expect(screen.getByRole("status")).toHaveTextContent("Dec 2026");
+    expect(screen.getByRole("table")).toHaveAccessibleName("Dec 2026");
   });
 
   it("ignores malformed bounds", () => {
@@ -605,10 +605,10 @@ describe("GcMonthCalendar controlled month", () => {
     const user = userEvent.setup();
     const onMonthChange = vi.fn();
     renderCalendar({ month: "2026-05", onMonthChange });
-    expect(screen.getByRole("status")).toHaveTextContent("May 2026");
+    expect(screen.getByRole("table")).toHaveAccessibleName("May 2026");
     await user.click(screen.getByRole("button", { name: "Next month" }));
     expect(onMonthChange).toHaveBeenLastCalledWith("2026-06");
-    expect(screen.getByRole("status")).toHaveTextContent("May 2026");
+    expect(screen.getByRole("table")).toHaveAccessibleName("May 2026");
   });
 
   it("follows a parent that stores the reported month", async () => {
@@ -635,12 +635,19 @@ describe("GcMonthCalendar controlled month", () => {
     await user.click(screen.getByRole("button", { name: "Next month" }));
     expect(screen.getByRole("status")).toHaveTextContent("Nov 2026");
     await user.click(screen.getByRole("button", { name: "Today" }));
-    expect(screen.getByRole("status")).toHaveTextContent("Sep 2026");
+    expect(screen.getByRole("table")).toHaveAccessibleName("Sep 2026");
+    // The parent changed the month, not our buttons: nothing to announce.
+    expect(screen.getByRole("status")).toBeEmptyDOMElement();
+  });
+
+  it("announces nothing on mount", () => {
+    renderCalendar();
+    expect(screen.getByRole("status")).toBeEmptyDOMElement();
   });
 
   it("keeps a controlled month inside minMonth and maxMonth", () => {
     renderCalendar({ month: "2027-03", minMonth: "2026-06", maxMonth: "2026-12" });
-    expect(screen.getByRole("status")).toHaveTextContent("Dec 2026");
+    expect(screen.getByRole("table")).toHaveAccessibleName("Dec 2026");
     expect(screen.getByRole("button", { name: "Next month" })).toHaveAttribute(
       "aria-disabled",
       "true",
@@ -653,7 +660,7 @@ describe("GcMonthCalendar controlled month", () => {
   it("uses its own month when the month prop is malformed", () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     renderCalendar({ month: "2026-5", defaultMonth: "2026-07" });
-    expect(screen.getByRole("status")).toHaveTextContent("Jul 2026");
+    expect(screen.getByRole("table")).toHaveAccessibleName("Jul 2026");
     expect(warn).toHaveBeenCalled();
     vi.restoreAllMocks();
   });
@@ -1049,6 +1056,172 @@ describe("GcMonthCalendar legend", () => {
   it("shows nothing without goals", () => {
     renderCalendar({ legend: true, goals: [] });
     expect(screen.queryByRole("list")).toBeNull();
+  });
+
+  it("says the numbers are daily goals", () => {
+    renderCalendar({ legend: true });
+    const caption = screen.getByText("Daily goal");
+    // Plain text right before the list, so screen readers read it in browse mode too.
+    expect(caption).not.toHaveAttribute("aria-hidden");
+    expect(caption.nextElementSibling).toBe(screen.getByRole("list"));
+  });
+
+  it("takes the caption from labels.legend", () => {
+    renderCalendar({ legend: true, labels: { legend: "Tagesziel" } });
+    expect(screen.getByText("Tagesziel").nextElementSibling).toBe(screen.getByRole("list"));
+  });
+
+  it("renders nothing below the grid without a legend or goals", () => {
+    const { unmount } = renderCalendar();
+    expect(screen.getByRole("table").nextElementSibling).toBeNull();
+    unmount();
+    renderCalendar({ legend: true, goals: [] });
+    expect(screen.getByRole("table").nextElementSibling).toBeNull();
+    expect(screen.queryByText("Daily goal")).toBeNull();
+  });
+});
+
+describe("GcMonthCalendar actions", () => {
+  const actionsBox = () => document.querySelector("[data-gc-actions]");
+  const setGoals = (onClick?: () => void) => (
+    <button type="button" onClick={onClick}>
+      Set goals
+    </button>
+  );
+
+  it("renders no actions box without actions, legend on or off", () => {
+    const { unmount } = renderCalendar({ legend: true });
+    expect(actionsBox()).toBeNull();
+    unmount();
+    renderCalendar();
+    expect(actionsBox()).toBeNull();
+  });
+
+  it("treats empty actions as none", () => {
+    for (const actions of [null, false, "", [false, null]]) {
+      const { unmount } = renderCalendar({ actions });
+      expect(screen.getByRole("table").nextElementSibling).toBeNull();
+      unmount();
+    }
+  });
+
+  it("puts the actions at the end of the legend row", () => {
+    renderCalendar({ legend: true, actions: setGoals() });
+    const box = actionsBox();
+    const row = screen.getByRole("list").parentElement;
+    expect(box).toContainElement(screen.getByRole("button", { name: "Set goals" }));
+    expect(row?.lastElementChild).toBe(box);
+    expect(box).not.toHaveAttribute("role");
+  });
+
+  it("renders the actions alone without a legend, or with no goals", () => {
+    const { unmount } = renderCalendar({ actions: setGoals() });
+    expect(actionsBox()).not.toBeNull();
+    expect(screen.queryByRole("list")).toBeNull();
+    unmount();
+    renderCalendar({ legend: true, goals: [], actions: setGoals() });
+    expect(actionsBox()).not.toBeNull();
+    expect(screen.queryByRole("list")).toBeNull();
+    expect(screen.queryByText("Daily goal")).toBeNull();
+  });
+
+  it("fires the action's click without changing the month or opening a tooltip", async () => {
+    const user = userEvent.setup();
+    const onClick = vi.fn();
+    const onMonthChange = vi.fn();
+    renderCalendar({ actions: setGoals(onClick), onMonthChange });
+    await user.hover(screen.getByRole("button", { name: "Set goals" }));
+    expect(document.querySelector("[data-gc-tooltip]")).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Set goals" }));
+    expect(onClick).toHaveBeenCalledTimes(1);
+    expect(onMonthChange).not.toHaveBeenCalled();
+    expect(screen.getByRole("table")).toHaveAccessibleName("Sep 2026");
+    expect(document.querySelector("[data-gc-tooltip]")).toBeNull();
+  });
+
+  it("closes a tapped day's tooltip when an action is tapped", async () => {
+    const user = userEvent.setup();
+    const onClick = vi.fn();
+    renderCalendar({
+      values: { "2026-09-01": { jobs: 3 } },
+      actions: setGoals(onClick),
+    });
+    const day = screen.getByRole("cell", { name: /^Tuesday, September 1:/ });
+    await user.pointer({ keys: "[TouchA]", target: day });
+    expect(document.querySelector("[data-gc-tooltip]")).not.toBeNull();
+    await user.pointer({
+      keys: "[TouchA]",
+      target: screen.getByRole("button", { name: "Set goals" }),
+    });
+    expect(document.querySelector("[data-gc-tooltip]")).toBeNull();
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("reaches the actions by Tab right after the month arrows", async () => {
+    const user = userEvent.setup();
+    renderCalendar({ legend: true, actions: setGoals() });
+    await user.tab();
+    await user.tab();
+    await user.tab();
+    expect(screen.getByRole("button", { name: "Set goals" })).toHaveFocus();
+  });
+});
+
+describe("GcMonthCalendar settings button", () => {
+  const settings = () => screen.queryByRole("button", { name: "Goal settings" });
+
+  it("shows no button without onSettingsClick", () => {
+    renderCalendar({ legend: true });
+    expect(settings()).toBeNull();
+    expect(document.querySelector("[data-gc-actions]")).toBeNull();
+  });
+
+  it("shows a small button that calls onSettingsClick", async () => {
+    const user = userEvent.setup();
+    const onSettingsClick = vi.fn();
+    const onMonthChange = vi.fn();
+    renderCalendar({ legend: true, onSettingsClick, onMonthChange });
+    const button = settings();
+    expect(document.querySelector("[data-gc-actions]")).toContainElement(button);
+    expect(button?.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
+    if (!button) throw new Error("no settings button");
+    await user.click(button);
+    expect(onSettingsClick).toHaveBeenCalledTimes(1);
+    expect(onSettingsClick).toHaveBeenCalledWith();
+    expect(onMonthChange).not.toHaveBeenCalled();
+  });
+
+  it("comes after your own actions in Tab order and opens with Enter", async () => {
+    const user = userEvent.setup();
+    const onSettingsClick = vi.fn();
+    renderCalendar({
+      onSettingsClick,
+      actions: <button type="button">Help</button>,
+    });
+    await user.tab();
+    await user.tab();
+    await user.tab();
+    expect(screen.getByRole("button", { name: "Help" })).toHaveFocus();
+    await user.tab();
+    expect(settings()).toHaveFocus();
+    await user.keyboard("{Enter}");
+    expect(onSettingsClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("takes its name from labels.settings", () => {
+    renderCalendar({
+      onSettingsClick: () => {},
+      labels: { settings: "Ziele festlegen" },
+    });
+    expect(
+      screen.getByRole("button", { name: "Ziele festlegen" }),
+    ).toBeInTheDocument();
+  });
+
+  it("ignores an onSettingsClick that isn't a function", () => {
+    renderCalendar({ onSettingsClick: "open" as never });
+    expect(settings()).toBeNull();
+    expect(document.querySelector("[data-gc-actions]")).toBeNull();
   });
 });
 

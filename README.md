@@ -24,7 +24,14 @@ Import the stylesheet once, e.g. in your root layout:
 import "react-goal-calendar/style.css";
 ```
 
-The stylesheet contains no CSS reset (no Tailwind preflight), so your app's base styles are left alone. Components are marked `"use client"` and work in Next.js App Router server components.
+The stylesheet contains no CSS reset (no Tailwind preflight), so your app's base styles are left alone.
+Its rules sit in CSS layers (`theme`, `utilities`), and unlayered CSS always beats layered CSS, so a
+global unlayered rule such as `button { … }` or `td { padding: … }` in your app also restyles the
+components. Put such rules in a layer (e.g. `@layer base`) or scope them to your own markup.
+
+Components are marked `"use client"`, so you can render them from Next.js App Router Server
+Components. Function props (`onMonthChange`, `onSettingsClick`, `renderTooltip`, `formatDayLabel`)
+can't cross from a Server Component, so pass those from a Client Component.
 
 ## Theming
 
@@ -87,7 +94,8 @@ The `.dark` selector is listed too so the mapping is re-read inside a dark subtr
 
 A month of days, each with one or two progress rings: the outer ring for the first goal, the inner
 ring for the second. Weeks start on Monday unless `weekStartsOn` says otherwise. Days are
-read-only; the only controls are the previous and next month buttons.
+read-only; the built-in controls are the previous and next month buttons and an optional settings
+button.
 
 The calendar draws no card frame; wrap it in `GcCard` for one, or place it in your own card. In your
 own card, set `--gc-card` to the card's background colour: the ring tracks and the tooltip are mixed
@@ -101,6 +109,10 @@ const goals: GcGoal[] = [
   { id: "emails", label: "Emails", target: 10 },
 ];
 
+const openGoalSettings = () => {
+  // Open your goals dialog.
+};
+
 <GcCard>
   <GcMonthCalendar
     goals={goals}
@@ -109,26 +121,30 @@ const goals: GcGoal[] = [
       "2026-09-02": { calls: 8 },
     }}
     today="2026-09-24"
+    legend
+    onSettingsClick={openGoalSettings}
   />
 </GcCard>;
 ```
 
-| Prop                    | Type                                             | Default                                        |
-| ----------------------- | ------------------------------------------------ | ---------------------------------------------- |
-| `goals`                 | `GcGoal[]` (first two drawn)                     | required                                       |
-| `values`                | `{ [date: "YYYY-MM-DD"]: { [goalId]: number } }` | `{}`                                           |
-| `today`                 | `"YYYY-MM-DD"`                                   | current local date                             |
-| `month`                 | `"YYYY-MM"` (controlled)                         |                                                |
-| `defaultMonth`          | `"YYYY-MM"`                                      | month of `today` (ignored when `month` is set) |
-| `minMonth` / `maxMonth` | `"YYYY-MM"`                                      | unbounded                                      |
-| `weekStartsOn`          | `0`–`6` (0 = Sunday)                             | `1`                                            |
-| `onMonthChange`         | `(month: "YYYY-MM") => void`                     |                                                |
-| `locale`                | BCP 47 string                                    | `"en-US"`                                      |
-| `renderTooltip`         | `(day: GcDayInfo) => ReactNode`, or `null`       | built-in summary                               |
-| `legend`                | `boolean`                                        | `false`                                        |
-| `formatDayLabel`        | `(day: GcDayInfo, dateText: string) => string`   | built-in English                               |
-| `labels`                | `{ previousMonth?, nextMonth? }`                 | English                                        |
-| `className`             | `string`                                         |                                                |
+| Prop                    | Type                                                 | Default                                        |
+| ----------------------- | ---------------------------------------------------- | ---------------------------------------------- |
+| `goals`                 | `GcGoal[]` (first two drawn)                         | required                                       |
+| `values`                | `{ [date: "YYYY-MM-DD"]: { [goalId]: number } }`     | `{}`                                           |
+| `today`                 | `"YYYY-MM-DD"`                                       | current local date                             |
+| `month`                 | `"YYYY-MM"` (controlled)                             |                                                |
+| `defaultMonth`          | `"YYYY-MM"`                                          | month of `today` (ignored when `month` is set) |
+| `minMonth` / `maxMonth` | `"YYYY-MM"`                                          | unbounded                                      |
+| `weekStartsOn`          | `0`–`6` (0 = Sunday)                                 | `1`                                            |
+| `onMonthChange`         | `(month: "YYYY-MM") => void`                         |                                                |
+| `locale`                | BCP 47 string                                        | `"en-US"`                                      |
+| `renderTooltip`         | `(day: GcDayInfo) => ReactNode`, or `null`           | built-in summary                               |
+| `legend`                | `boolean`                                            | `false`                                        |
+| `actions`               | `ReactNode`                                          |                                                |
+| `onSettingsClick`       | `() => void` (shows the settings button)             |                                                |
+| `formatDayLabel`        | `(day: GcDayInfo, dateText: string) => string`       | built-in English                               |
+| `labels`                | `{ previousMonth?, nextMonth?, legend?, settings? }` | English                                        |
+| `className`             | `string`                                             |                                                |
 
 **Controlled month.** Pass `month` and update it from `onMonthChange` to own the month, e.g. to
 load data per month or add your own "Today" button:
@@ -140,12 +156,61 @@ const [month, setMonth] = useState("2026-09");
 <GcMonthCalendar goals={goals} values={values} month={month} onMonthChange={setMonth} />
 ```
 
-**Legend.** `legend` shows each goal's ring colour, label and daily target below the grid, so users
-can tell the rings apart without hovering.
+**Legend.** `legend` shows a "Daily goal" caption, then each goal's ring colour, label and daily
+target below the grid, so users can tell the rings apart without hovering and know the numbers are
+targets. Change the caption with `labels.legend`.
+
+**Settings button and actions.** Pass `onSettingsClick` to show a small settings button at the end
+of the legend row (bottom right; bottom left under `dir="rtl"`), e.g. to open your own goals
+dialog. Its accessible name is "Goal settings" (`labels.settings` to change it). For anything else,
+pass your own nodes in `actions`: they sit in the same place, before the settings button, rendered
+as given. Without a legend they get a row of their own.
+
+```tsx
+const [goalsOpen, setGoalsOpen] = useState(false);
+
+<GcMonthCalendar
+  goals={goals}
+  values={values}
+  legend
+  onSettingsClick={() => setGoalsOpen(true)}
+/>
+<GoalsDialog open={goalsOpen} onOpenChange={setGoalsOpen} />
+```
+
+`onSettingsClick` is a function, so in the Next.js App Router pass it from a Client Component. From
+a Server Component, put a Client Component button in `actions` instead:
+
+```tsx
+// refresh-button.tsx
+"use client";
+import { useRouter } from "next/navigation";
+
+export function RefreshButton() {
+  const router = useRouter();
+  return (
+    <button type="button" onClick={() => router.refresh()}>
+      Refresh
+    </button>
+  );
+}
+```
+
+```tsx
+// page.tsx (Server Component): router.refresh() re-runs it, so values are recomputed
+<GcMonthCalendar
+  goals={goals}
+  values={values}
+  today={today}
+  legend
+  actions={<RefreshButton />}
+/>
+```
 
 Other `<div>` props pass through to the root, and `ref` points at it.
 
-`GcGoal` is `{ id: string; label: string; target: number; unit?: string }`.
+`GcGoal` is `{ id: string; label: string; target: number; unit?: string }`. `unit` (e.g. `"h"`)
+follows the amounts in the legend, the tooltip and the accessible text.
 
 - A ring shows `done / target` and is full once the target is reached. The accessible text keeps the
   real amount ("Calls 25 of 20").
@@ -156,7 +221,7 @@ Other `<div>` props pass through to the root, and `ref` points at it.
   All goals met." (English by default; pass `formatDayLabel` and `labels` to translate. Dates and
   numbers follow `locale`). `formatDayLabel` gets the date already formatted but raw numbers: format
   them with one `Intl.NumberFormat` created outside the callback, and check `day.future`, since
-  future days still carry their `values`.
+  future days still carry their `values`. Return `""` to use the built-in text for a day.
 
 In development, the calendar logs a `console.warn` for props it has to ignore: a malformed `today`,
 `month`, `defaultMonth`, `minMonth` or `maxMonth`, `minMonth` after `maxMonth`, an invalid
@@ -165,7 +230,8 @@ per page load. Production builds log nothing.
 
 Each day `<td>` carries these attributes when they apply, for styling or tests: `data-today` (also
 `aria-current="date"`), `data-future`, `data-complete` (every goal met), `data-empty` (nothing
-recorded).
+recorded). `data-complete` and `data-empty` are set on past days and today only, never with
+`data-future`.
 
 **Tooltip.** While the mouse is over a past day or today, or after tapping one, a small card shows
 the date and each goal's `done / target`, with a ✓ for met goals. Pass `renderTooltip` to change
@@ -185,8 +251,8 @@ pass `renderTooltip={null}` to turn it off:
 `GcDayInfo` is `{ date, today, future, complete, goals: { goal, done, target, fraction }[] }`. For
 future days `goals` holds the real `values`, even though their rings draw empty.
 
-The tooltip opens on mouse hover and on tap (touch or pen), closes on Escape or a tap elsewhere,
-and is hidden from assistive tech, because each day's accessible text already has the same
+The tooltip opens on mouse hover and on tap (touch or pen), closes on Escape, a tap elsewhere or a
+second tap on the same day, and is hidden from assistive tech, because each day's accessible text already has the same
 numbers. Keyboard and screen-reader users never see it, so don't put information only there. The
 hovered or tapped day gets `data-hovered` and the card carries `data-gc-tooltip`, for styling.
 
@@ -203,6 +269,11 @@ disagree on the date and cause a hydration mismatch.
 | `--gc-tooltip-fg`   | Tooltip text (default: `--gc-fg`)         |
 
 ### GcMonthSummary
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Gsync/react-goal-calendar/main/.github/assets/goal-summary-dark.png">
+  <img alt="A month summary with a two-ring donut of goal-hit percentages and four stat rows" src="https://raw.githubusercontent.com/Gsync/react-goal-calendar/main/.github/assets/goal-summary-light.png" width="380">
+</picture>
 
 A month at a glance: a donut with the share of days each goal was hit, and rows of numbers such as
 streaks. **Your app computes the numbers** and passes them per month, keyed by `YYYY-MM`; the
@@ -243,7 +314,13 @@ const [month, setMonth] = useState("2026-09");
   />
 </GcCard>
 <GcCard>
-  <GcMonthCalendar goals={goals} values={values} month={month} onMonthChange={setMonth} />
+  <GcMonthCalendar
+    goals={goals}
+    values={values}
+    month={month}
+    onMonthChange={setMonth}
+    today="2026-09-24"
+  />
 </GcCard>;
 ```
 
@@ -258,12 +335,14 @@ const [month, setMonth] = useState("2026-09");
 | `onMonthChange`         | `(month: "YYYY-MM") => void`                                               |                                                |
 | `locale`                | BCP 47 string                                                              | `"en-US"`                                      |
 | `legend`                | `boolean`                                                                  | `true`                                         |
+| `renderTooltip`         | `({ month, rings: { ring, value }[] }) => ReactNode`, or `null`            | built-in summary                               |
 | `labels`                | `{ previousMonth?, nextMonth?, goalHit?, noData? }`                        | English                                        |
 | `className`             | `string`                                                                   |                                                |
 
 `Stat` is `{ label: ReactNode; value: ReactNode; tone?: "primary" | "success" | "warning" | "danger"
 | "ring-1" | "ring-2" | "muted" }`. Your app writes the text ("8 days"), so plurals and translation
-are yours. `tone` colours the row's dot (default `"muted"`). To name these shapes in your code, use
+are yours. `tone` colours the row's dot (default `"muted"`). A label too long for its row is cut
+off with an ellipsis; keep labels short. To name these shapes in your code, use
 `GcMonthSummaryProps["data"]`.
 
 **Ring values are fractions: pass `0.78` for 78%.** The first ring is the outer one, coloured like
@@ -275,12 +354,22 @@ unless the value is exactly 1, nor to 0% unless it is exactly 0 (0.996 shows "99
 percentage is which ring; turn it off with `legend={false}` only when the rings are labelled
 elsewhere.
 
+**Tooltip.** While the mouse is over the donut, or after tapping it, a small card headed "Goal hit
+(Sep 2026)" shows each ring's label and percentage, with a ✓ for a ring at 100%. It works like the
+calendar's: it closes on Escape, a tap elsewhere or a second tap on the donut, is hidden from assistive tech, and carries
+`data-gc-tooltip`. Pass `renderTooltip` to change what's inside (it gets the month as `YYYY-MM` and
+each ring with its value from `data`, or `null` when it has none), return `null` to show nothing, or
+pass `renderTooltip={null}` to turn it off. By default a month without any value shows none. It uses
+the calendar's `--gc-tooltip-bg` and `--gc-tooltip-fg`.
+
 **Layout.** The component sizes itself to its own width: from 18rem (a `GcCard` at least 322px
 wide) the rows sit to the right of the donut; narrower, they move below it in two columns.
 
 **Accessibility.** The donut and legend are hidden from assistive tech; one visually hidden
 sentence carries the result ("September 2026. Goal hit: Calls 78%, Emails 61%") and is announced
-when the month changes. The rows are a description list, read in order.
+when its own arrows change the month. A `month` set by your app is not announced, so a summary
+synced with a calendar doesn't repeat the month the calendar just spoke. The rows are a description
+list, read in order.
 
 In development, the summary logs a `console.warn` for a malformed `today`, `month`, `defaultMonth`,
 `minMonth` or `maxMonth`, `minMonth` after `maxMonth`, a `rings` that isn't an array, more than two
@@ -412,7 +501,8 @@ Stable (changes are always called out in the changelog, and need a major release
 
 - the `--gc-*` variables listed in this README
 - the `data-*` attributes: `data-today`, `data-future`, `data-complete`, `data-empty`,
-  `data-hovered`, `data-gc-tooltip`
+  `data-hovered`, `data-gc-tooltip`, `data-gc-actions` (the box around `actions` and the settings
+  button)
 
 Not stable, so don't target them: class names (they all start with `gcx:`), element structure, and
 Tailwind's `--gcx-*` variables (`--gcx-spacing`, `--gcx-color-blue-600`).

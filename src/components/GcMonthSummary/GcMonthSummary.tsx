@@ -1,8 +1,17 @@
-import { forwardRef, useEffect, useMemo } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import { cn } from "../../lib/cn";
 import { parseDateKey } from "../../lib/dates";
 import { MonthHeader } from "../../lib/MonthHeader";
 import { RING_DOTS } from "../../lib/ringDots";
+import { hasContent } from "../../lib/hasContent";
+import { LiveText } from "../../lib/LiveText";
+import { Tooltip, TooltipRows } from "../../lib/Tooltip";
 import { useMonth } from "../../lib/useMonth";
 import { warn } from "../../lib/warn";
 import { Donut } from "./Donut";
@@ -11,6 +20,7 @@ import type { GcMonthSummaryProps } from "./types";
 import { summaryWarnings } from "./warnings";
 
 // No frame: wrap in GcCard for one. A container, so the layout follows this element's width.
+// `relative` anchors the tooltip.
 const ROOT = "gcx:@container gcx:relative gcx:box-border gcx:text-gc-fg";
 
 // Full class literals so Tailwind generates them. `muted` uses the muted text colour because the
@@ -39,22 +49,22 @@ export const GcMonthSummary = forwardRef<HTMLDivElement, GcMonthSummaryProps>(
       onMonthChange,
       locale = "en-US",
       legend = true,
+      renderTooltip,
       labels,
       className,
       ...rest
     },
     ref,
   ) {
-    const { shownMonth, canGoBack, canGoForward, goBack, goForward } = useMonth(
-      {
+    const { shownMonth, announce, canGoBack, canGoForward, goBack, goForward } =
+      useMonth({
         today,
         defaultMonth,
         month,
         minMonth,
         maxMonth,
         onMonthChange,
-      },
-    );
+      });
     // Joined so the effect re-runs only when the set of problems changes, not on every render.
     const warnings = summaryWarnings({
       rings,
@@ -112,7 +122,7 @@ export const GcMonthSummary = forwardRef<HTMLDivElement, GcMonthSummaryProps>(
     );
     const goalHit = labels?.goalHit || "Goal hit";
     const noData = labels?.noData || "no data";
-    // The donut is aria-hidden; this sentence is its text, announced when the month changes.
+    // The donut is aria-hidden; this sentence is its text, announced when our buttons change month.
     const monthText = fmt.longTitle.format(firstDay);
     const status =
       shownRings.length === 0
@@ -122,6 +132,44 @@ export const GcMonthSummary = forwardRef<HTMLDivElement, GcMonthSummaryProps>(
           : `${monthText}. ${goalHit}: ${shownRings
               .map((ring, i) => `${ring.label} ${texts[i] ?? noData}`)
               .join(", ")}`;
+    // Speak only the sentence our navigation produced; later data for that month stays silent.
+    const [spoken, setSpoken] = useState<{ month: string; text: string } | null>(null);
+    if (!announce && spoken) setSpoken(null);
+    if (announce && spoken?.month !== shownMonth) setSpoken({ month: shownMonth, text: status });
+    const live = announce && spoken?.text === status;
+    const [donut, setDonut] = useState<HTMLElement | null>(null);
+    // Without rings the donut unmounts with no pointerleave; drop the detached anchor.
+    if (donut && shownRings.length === 0) setDonut(null);
+    // The tooltip shows one month's numbers, so it closes when the month changes from either side.
+    const [donutMonth, setDonutMonth] = useState(shownMonth);
+    if (donutMonth !== shownMonth) {
+      setDonutMonth(shownMonth);
+      setDonut(null);
+    }
+    // A month without values shows dashes, so by default there is nothing to add for it.
+    const defaultTooltip = (): ReactNode =>
+      values.every((value) => value === null) ? null : (
+        <TooltipRows
+          title={`${goalHit} (${fmt.title.format(firstDay)})`}
+          rows={shownRings.map((ring, i) => ({
+            label: ring.label,
+            text: texts[i] ?? "—",
+            met: values[i] === 1,
+          }))}
+        />
+      );
+    const tooltipFor =
+      renderTooltip === undefined ? defaultTooltip : renderTooltip;
+    const tooltip =
+      donut && tooltipFor
+        ? tooltipFor({
+            month: shownMonth,
+            rings: shownRings.map((ring, i) => ({
+              ring,
+              value: values[i] ?? null,
+            })),
+          })
+        : null;
 
     return (
       <div
@@ -132,25 +180,43 @@ export const GcMonthSummary = forwardRef<HTMLDivElement, GcMonthSummaryProps>(
       >
         <MonthHeader
           title={fmt.title.format(firstDay)}
-          live={false}
           canGoBack={canGoBack}
           canGoForward={canGoForward}
           onPrevious={goBack}
           onNext={goForward}
           labels={labels}
         />
-        <p role="status" className="gcx:sr-only gcx:m-0">
-          {status}
+        <p className="gcx:sr-only gcx:m-0">
+          <LiveText text={status} live={live} />
         </p>
         {(shownRings.length > 0 || stats.length > 0) && (
           // Side by side once the content is 18rem wide (a GcCard of about 320px), else stacked.
-          <div className="gcx:mt-3 gcx:grid gcx:gap-4 gcx:@2xs:grid-cols-[auto_1fr] gcx:@2xs:items-center">
+          <div className="gcx:mt-3 gcx:grid gcx:gap-4 gcx:@2xs:gap-x-2 gcx:@2xs:grid-cols-2 gcx:@2xs:items-center">
             {shownRings.length > 0 && (
               <div
                 aria-hidden="true"
-                className="gcx:flex gcx:flex-col gcx:items-center gcx:gap-2"
+                className={cn(
+                  "gcx:flex gcx:flex-col gcx:items-center gcx:gap-2",
+                  stats.length === 0 && "gcx:@2xs:col-span-2",
+                )}
               >
-                <Donut values={values} texts={texts} centerLabel={goalHit} />
+                <Donut
+                  values={values}
+                  texts={texts}
+                  centerLabel={goalHit}
+                  onPointerEnter={(event) => {
+                    if (event.pointerType === "mouse") setDonut(event.currentTarget);
+                  }}
+                  onPointerUp={(event) => {
+                    if (event.pointerType === "mouse") return;
+                    const element = event.currentTarget;
+                    setDonut((current) => (current ? null : element));
+                  }}
+                  onPointerLeave={(event) => {
+                    // Lifting a finger fires pointerleave; only a mouse leaving closes.
+                    if (event.pointerType === "mouse") setDonut(null);
+                  }}
+                />
                 {legend && (
                   <ul className="gcx:m-0 gcx:flex gcx:list-none gcx:flex-wrap gcx:justify-center gcx:gap-x-4 gcx:gap-y-1 gcx:p-0 gcx:text-sm gcx:text-gc-muted-fg">
                     {shownRings.map((ring, i) => (
@@ -181,7 +247,7 @@ export const GcMonthSummary = forwardRef<HTMLDivElement, GcMonthSummaryProps>(
                 {stats.map((stat, i) => (
                   <div
                     key={i}
-                    className="gcx:flex gcx:min-w-0 gcx:flex-col gcx:gap-0.5 gcx:rounded-lg gcx:bg-gc-muted gcx:px-3 gcx:py-2 gcx:@2xs:flex-row gcx:@2xs:items-center gcx:@2xs:justify-between gcx:@2xs:gap-3"
+                    className="gcx:flex gcx:min-w-0 gcx:flex-wrap gcx:items-center gcx:justify-between gcx:gap-x-3 gcx:gap-y-0.5 gcx:rounded-lg gcx:bg-gc-muted gcx:px-3 gcx:py-2"
                   >
                     <dt className="gcx:m-0 gcx:flex gcx:min-w-0 gcx:items-center gcx:gap-2 gcx:text-sm gcx:text-gc-muted-fg">
                       <span
@@ -191,7 +257,7 @@ export const GcMonthSummary = forwardRef<HTMLDivElement, GcMonthSummaryProps>(
                           TONE_DOTS.get(stat.tone ?? "muted") ?? MUTED_DOT,
                         )}
                       />
-                      {stat.label}
+                      <span className="gcx:truncate">{stat.label}</span>
                     </dt>
                     <dd className="gcx:m-0 gcx:text-sm gcx:font-semibold gcx:whitespace-nowrap gcx:tabular-nums">
                       {stat.value}
@@ -201,6 +267,11 @@ export const GcMonthSummary = forwardRef<HTMLDivElement, GcMonthSummaryProps>(
               </dl>
             )}
           </div>
+        )}
+        {donut && hasContent(tooltip) && (
+          <Tooltip anchor={donut} onDismiss={() => setDonut(null)}>
+            {tooltip}
+          </Tooltip>
         )}
       </div>
     );

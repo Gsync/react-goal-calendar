@@ -86,6 +86,7 @@ const SUMMARY_DATA: GcMonthSummaryProps["data"] = SEPT_SUMMARY
 // One <section> per component, each with a heading and a few prop variations.
 export function App() {
   const [month, setMonth] = useState("2026-09");
+  const [settingsClicks, setSettingsClicks] = useState(0);
   return (
     <main
       style={{
@@ -112,6 +113,17 @@ export function App() {
             month={month}
             onMonthChange={setMonth}
             legend
+          />
+        </GcCard>
+
+        <h3>Settings button (clicked {settingsClicks}×)</h3>
+        <GcCard style={card}>
+          <GcMonthCalendar
+            goals={GOALS}
+            values={VALUES}
+            today="2026-09-24"
+            legend
+            onSettingsClick={() => setSettingsClicks((n) => n + 1)}
           />
         </GcCard>
 
@@ -234,6 +246,18 @@ export function App() {
           />
         </GcCard>
 
+        <h3>Just past the side-by-side breakpoint, long ring labels</h3>
+        <GcCard style={{ maxWidth: 330 }}>
+          <GcMonthSummary
+            rings={[
+              { ...GOALS[0], label: "Jobs applied" },
+              { ...GOALS[1], label: "Activity" },
+            ]}
+            data={SUMMARY_DATA}
+            today="2026-09-24"
+          />
+        </GcCard>
+
         <h3>German</h3>
         <GcCard style={card}>
           <GcMonthSummary
@@ -266,6 +290,20 @@ export function App() {
             data={SUMMARY_DATA}
             today="2026-09-24"
             legend={false}
+          />
+        </GcCard>
+
+        <h3>Custom tooltip</h3>
+        <GcCard style={card}>
+          <GcMonthSummary
+            rings={GOALS}
+            data={SUMMARY_DATA}
+            today="2026-09-24"
+            renderTooltip={({ rings }) =>
+              rings
+                .map(({ ring, value }) => `${ring.label}: ${value ?? "none"}`)
+                .join(" · ")
+            }
           />
         </GcCard>
 

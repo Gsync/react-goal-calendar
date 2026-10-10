@@ -68,6 +68,23 @@ interface GcMonthSummaryOwnProps {
    * @defaultValue true
    */
   legend?: boolean;
+  /**
+   * Content of the tooltip shown while the mouse is over the donut or after tapping it. Gets the
+   * shown month (`YYYY-MM`) and each drawn ring's value from `data` (`null` when it has none).
+   * Return `null` to show none, or pass `null` to turn the tooltip off. It closes on Escape or a
+   * tap elsewhere and is hidden from assistive tech, so don't put information only there.
+   * @example renderTooltip={({ rings }) => (rings[0]?.value === 1 ? "Perfect month" : null)}
+   * @defaultValue "Goal hit (Sep 2026)" and each ring's label and percentage, if any
+   */
+  renderTooltip?:
+    | ((summary: {
+        month: string;
+        rings: readonly {
+          ring: { id: string; label: string };
+          value: number | null;
+        }[];
+      }) => ReactNode)
+    | null;
   /** Built-in text, e.g. to translate it. */
   labels?: {
     /** @defaultValue "Previous month" */

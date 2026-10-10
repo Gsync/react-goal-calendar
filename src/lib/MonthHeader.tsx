@@ -1,5 +1,8 @@
-const NAV_BUTTON =
-  "gcx:inline-flex gcx:size-8 gcx:cursor-pointer gcx:items-center gcx:justify-center gcx:rounded-md gcx:border-0 gcx:bg-transparent gcx:p-0 gcx:text-gc-muted-fg gcx:hover:bg-gc-muted gcx:hover:text-gc-fg gcx:focus-visible:outline-2 gcx:focus-visible:outline-offset-2 gcx:focus-visible:outline-gc-primary gcx:aria-disabled:cursor-not-allowed gcx:aria-disabled:opacity-40 gcx:aria-disabled:hover:bg-transparent gcx:aria-disabled:hover:text-gc-muted-fg";
+import type { ReactNode } from "react";
+import { cn } from "./cn";
+import { ICON_BUTTON } from "./iconButton";
+
+const NAV_BUTTON = cn("gcx:size-8", ICON_BUTTON);
 
 // Mirrored under dir="rtl" so "previous" still points toward the start.
 function Chevron({ d }: { d: string }) {
@@ -22,10 +25,8 @@ function Chevron({ d }: { d: string }) {
 }
 
 interface MonthHeaderProps {
-  title: string;
+  title: ReactNode;
   titleId?: string;
-  // A live title is announced when the month changes; views that announce more pass false.
-  live: boolean;
   canGoBack: boolean;
   canGoForward: boolean;
   onPrevious: () => void;
@@ -36,7 +37,6 @@ interface MonthHeaderProps {
 export function MonthHeader({
   title,
   titleId,
-  live,
   canGoBack,
   canGoForward,
   onPrevious,
@@ -45,11 +45,7 @@ export function MonthHeader({
 }: MonthHeaderProps) {
   return (
     <div className="gcx:flex gcx:items-center gcx:justify-between gcx:gap-2">
-      <div
-        id={titleId}
-        role={live ? "status" : undefined}
-        className="gcx:text-lg gcx:font-semibold"
-      >
+      <div id={titleId} className="gcx:text-lg gcx:font-semibold">
         {title}
       </div>
       <div className="gcx:flex gcx:gap-1">
