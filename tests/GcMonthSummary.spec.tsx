@@ -329,6 +329,57 @@ describe("GcMonthSummary donut", () => {
     );
     expect(spoken()).toEqual(["", "November 2026. Goal hit: no data"]);
   });
+
+  it("announces its own navigation when the parent applies the month later", async () => {
+    const user = userEvent.setup();
+    // Like a URL-driven month: the parent commits the requested month on a later render.
+    function Deferred() {
+      const [month, setMonth] = useState("2026-09");
+      const [pending, setPending] = useState(month);
+      return (
+        <>
+          <GcMonthSummary
+            rings={RINGS}
+            today="2026-09-24"
+            locale="en-US"
+            month={month}
+            onMonthChange={setPending}
+          />
+          <button type="button" onClick={() => setMonth(pending)}>
+            Apply
+          </button>
+        </>
+      );
+    }
+    render(<Deferred />);
+    await user.click(screen.getByRole("button", { name: "Next month" }));
+    expect(screen.getByRole("status")).toBeEmptyDOMElement();
+    await user.click(screen.getByRole("button", { name: "Apply" }));
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "October 2026. Goal hit: no data",
+    );
+  });
+
+  it("stays silent when the data changes after navigating", async () => {
+    const user = userEvent.setup();
+    const { rerender } = renderSummary();
+    await user.click(screen.getByRole("button", { name: "Next month" }));
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "October 2026. Goal hit: no data",
+    );
+    rerender(
+      <GcMonthSummary
+        rings={RINGS}
+        data={{ "2026-10": { rings: { jobs: 0.25 } } }}
+        today="2026-09-24"
+        locale="en-US"
+      />,
+    );
+    expect(screen.getByRole("status")).toBeEmptyDOMElement();
+    expect(sentence()).toHaveTextContent(
+      "October 2026. Goal hit: Jobs 25%, Activity no data",
+    );
+  });
 });
 
 describe("GcMonthSummary stat rows", () => {
@@ -532,6 +583,18 @@ describe("GcMonthSummary tooltip", () => {
     rerender(<GcMonthSummary rings={[]} {...props} />);
     expect(tooltip()).toBeNull();
     rerender(<GcMonthSummary rings={RINGS} {...props} />);
+    expect(tooltip()).toBeNull();
+  });
+
+  it("closes when the month changes", async () => {
+    const user = userEvent.setup();
+    const props = { today: "2026-09-24", renderTooltip: () => "Custom" };
+    const { rerender } = render(
+      <GcMonthSummary rings={RINGS} month="2026-09" {...props} />,
+    );
+    await user.pointer({ keys: "[TouchA]", target: donut() });
+    expect(tooltip()).not.toBeNull();
+    rerender(<GcMonthSummary rings={RINGS} month="2026-10" {...props} />);
     expect(tooltip()).toBeNull();
   });
 });

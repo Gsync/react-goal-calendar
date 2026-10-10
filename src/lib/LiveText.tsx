@@ -1,5 +1,4 @@
-// The live region is always mounted but holds the text only when `live`, so only changes made
-// while live are announced. Otherwise the text sits beside it, read once either way.
+// Text sits in the always-mounted live region only while `live`, so only those changes are spoken.
 export function LiveText({ text, live }: { text: string; live: boolean }) {
   return (
     <>

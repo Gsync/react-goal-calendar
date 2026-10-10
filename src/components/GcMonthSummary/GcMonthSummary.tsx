@@ -11,11 +11,10 @@ import { MonthHeader } from "../../lib/MonthHeader";
 import { RING_DOTS } from "../../lib/ringDots";
 import { hasContent } from "../../lib/hasContent";
 import { LiveText } from "../../lib/LiveText";
-import { Tooltip } from "../../lib/Tooltip";
+import { Tooltip, TooltipRows } from "../../lib/Tooltip";
 import { useMonth } from "../../lib/useMonth";
 import { warn } from "../../lib/warn";
 import { Donut } from "./Donut";
-import { DefaultTooltip } from "./MonthTooltip";
 import { percentText, ringValue } from "./percent";
 import type { GcMonthSummaryProps } from "./types";
 import { summaryWarnings } from "./warnings";
@@ -133,17 +132,28 @@ export const GcMonthSummary = forwardRef<HTMLDivElement, GcMonthSummaryProps>(
           : `${monthText}. ${goalHit}: ${shownRings
               .map((ring, i) => `${ring.label} ${texts[i] ?? noData}`)
               .join(", ")}`;
+    // Speak only the sentence our navigation produced; later data for that month stays silent.
+    const [spoken, setSpoken] = useState<{ month: string; text: string } | null>(null);
+    if (!announce && spoken) setSpoken(null);
+    if (announce && spoken?.month !== shownMonth) setSpoken({ month: shownMonth, text: status });
+    const live = announce && spoken?.text === status;
     const [donut, setDonut] = useState<HTMLElement | null>(null);
     // Without rings the donut unmounts with no pointerleave; drop the detached anchor.
     if (donut && shownRings.length === 0) setDonut(null);
+    // The tooltip shows one month's numbers, so it closes when the month changes from either side.
+    const [donutMonth, setDonutMonth] = useState(shownMonth);
+    if (donutMonth !== shownMonth) {
+      setDonutMonth(shownMonth);
+      setDonut(null);
+    }
     // A month without values shows dashes, so by default there is nothing to add for it.
     const defaultTooltip = (): ReactNode =>
       values.every((value) => value === null) ? null : (
-        <DefaultTooltip
+        <TooltipRows
           title={`${goalHit} (${fmt.title.format(firstDay)})`}
-          rings={shownRings.map((ring, i) => ({
+          rows={shownRings.map((ring, i) => ({
             label: ring.label,
-            text: texts[i] ?? null,
+            text: texts[i] ?? "—",
             met: values[i] === 1,
           }))}
         />
@@ -177,7 +187,7 @@ export const GcMonthSummary = forwardRef<HTMLDivElement, GcMonthSummaryProps>(
           labels={labels}
         />
         <p className="gcx:sr-only gcx:m-0">
-          <LiveText text={status} live={announce} />
+          <LiveText text={status} live={live} />
         </p>
         {(shownRings.length > 0 || stats.length > 0) && (
           // Side by side once the content is 18rem wide (a GcCard of about 320px), else stacked.
@@ -185,7 +195,10 @@ export const GcMonthSummary = forwardRef<HTMLDivElement, GcMonthSummaryProps>(
             {shownRings.length > 0 && (
               <div
                 aria-hidden="true"
-                className="gcx:flex gcx:flex-col gcx:items-center gcx:gap-2"
+                className={cn(
+                  "gcx:flex gcx:flex-col gcx:items-center gcx:gap-2",
+                  stats.length === 0 && "gcx:@2xs:col-span-2",
+                )}
               >
                 <Donut
                   values={values}
