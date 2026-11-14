@@ -8,7 +8,7 @@ Presentational React components for goal tracking: progress-ring calendars, summ
 </picture>
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Gsync/react-goal-calendar/main/.github/assets/goal-summary-dark.png">
-  <img alt="A month summary with a two-ring donut of goal-hit percentages and four stat rows" src="https://raw.githubusercontent.com/Gsync/react-goal-calendar/main/.github/assets/goal-summary-light.png" width="380">
+  <img alt="A month summary with a two-ring donut of goal-hit percentages and two stats on each side" src="https://raw.githubusercontent.com/Gsync/react-goal-calendar/main/.github/assets/goal-summary-light.png" width="380">
 </picture>
 
 **[Live demo](https://gsync.github.io/react-goal-calendar/)**
@@ -276,7 +276,7 @@ disagree on the date and cause a hydration mismatch.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Gsync/react-goal-calendar/main/.github/assets/goal-summary-dark.png">
-  <img alt="A month summary with a two-ring donut of goal-hit percentages and four stat rows" src="https://raw.githubusercontent.com/Gsync/react-goal-calendar/main/.github/assets/goal-summary-light.png" width="380">
+  <img alt="A month summary with a two-ring donut of goal-hit percentages and two stats on each side" src="https://raw.githubusercontent.com/Gsync/react-goal-calendar/main/.github/assets/goal-summary-light.png" width="380">
 </picture>
 
 A month at a glance: a donut with the share of days each goal was hit, and rows of numbers such as
@@ -345,8 +345,9 @@ const [month, setMonth] = useState("2026-09");
 
 `Stat` is `{ label: ReactNode; value: ReactNode; tone?: "primary" | "success" | "warning" | "danger"
 | "ring-1" | "ring-2" | "muted" }`. Your app writes the text ("8 days"), so plurals and translation
-are yours. `tone` colours the row's dot (default `"muted"`). A label too long for its row is cut
-off with an ellipsis; keep labels short. To name these shapes in your code, use
+are yours. `tone` colours the row's dot, or the bar under its value in the wide layout (default
+`"muted"`). A label too long for its row wraps onto a second line; keep labels short. To name these
+shapes in your code, use
 `GcMonthSummaryProps["data"]`.
 
 **Ring values are fractions: pass `0.78` for 78%.** The first ring is the outer one, coloured like
@@ -366,8 +367,19 @@ each ring with its value from `data`, or `null` when it has none), return `null`
 pass `renderTooltip={null}` to turn it off. By default a month without any value shows none. It uses
 the calendar's `--gc-tooltip-bg` and `--gc-tooltip-fg`.
 
-**Layout.** The component sizes itself to its own width: from 18rem (a `GcCard` at least 322px
-wide) the rows sit to the right of the donut; narrower, they move below it in two columns.
+**Layout.** The component sizes itself to its own width. Narrower than 20rem (a `GcCard` under
+354px), the donut sits on top with the rows as tiles below it, two per line. From 20rem the first
+half of the rows sits before the donut and the rest after it, one per line; from 32rem (a `GcCard`
+of 546px or more) each side shows two rows per line, with a coloured bar under each value.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Gsync/react-goal-calendar/main/.github/assets/goal-summary-narrow-dark.png">
+  <img alt="The narrow layout: the donut on top and four stat tiles below it, two per line" src="https://raw.githubusercontent.com/Gsync/react-goal-calendar/main/.github/assets/goal-summary-narrow-light.png" width="280">
+</picture>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Gsync/react-goal-calendar/main/.github/assets/goal-summary-wide-dark.png">
+  <img alt="The wide layout: two stats on each side of the donut, each with a coloured bar under its value" src="https://raw.githubusercontent.com/Gsync/react-goal-calendar/main/.github/assets/goal-summary-wide-light.png" width="640">
+</picture>
 
 **Accessibility.** The donut and legend are hidden from assistive tech; one visually hidden
 sentence carries the result ("September 2026. Goal hit: Calls 78%, Emails 61%") and is announced
