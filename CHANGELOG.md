@@ -1,5 +1,11 @@
 # react-goal-calendar
 
+## 0.4.1
+
+### Patch Changes
+
+- c1999ac: GcMonthSummary: new layout. "Goal hit" sits above the donut with larger percentages, and the stat rows flank the donut (first half before it, the rest after it) once the component is 20rem wide, with a coloured bar under each value from 32rem. Narrower, the rows show as tiles below the donut. Long stat labels now wrap instead of being cut off.
+
 ## 0.4.0
 
 ### Minor Changes
