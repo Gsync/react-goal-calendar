@@ -246,8 +246,17 @@ export function App() {
           />
         </GcCard>
 
+        <h3>Wide card</h3>
+        <GcCard style={{ maxWidth: 640 }}>
+          <GcMonthSummary
+            rings={GOALS}
+            data={SUMMARY_DATA}
+            today="2026-09-24"
+          />
+        </GcCard>
+
         <h3>Just past the side-by-side breakpoint, long ring labels</h3>
-        <GcCard style={{ maxWidth: 330 }}>
+        <GcCard style={{ maxWidth: 360 }}>
           <GcMonthSummary
             rings={[
               { ...GOALS[0], label: "Jobs applied" },

@@ -163,15 +163,11 @@ describe("GcMonthSummary root element", () => {
 
 describe("GcMonthSummary donut", () => {
   // jsdom computes no layout, so pin the classes that keep the text inside the 69px hole: the
-  // percent lines set their own line height (--tw-leading doesn't inherit), the label is capped.
+  // percent lines set their own line height (--tw-leading doesn't inherit).
   it("sizes the centre text to fit inside the inner ring", () => {
     renderSummary();
-    expect(screen.getByText("78%")).toHaveClass("gcx:text-lg/tight");
-    expect(screen.getByText("61%")).toHaveClass("gcx:text-lg/tight");
-    expect(screen.getByText("Goal hit")).toHaveClass(
-      "gcx:max-w-[44px]",
-      "gcx:truncate",
-    );
+    expect(screen.getByText("78%")).toHaveClass("gcx:text-[22px]/[1.25]");
+    expect(screen.getByText("61%")).toHaveClass("gcx:text-[22px]/[1.25]");
   });
 
   it("announces the month and each ring's share", () => {
@@ -181,7 +177,7 @@ describe("GcMonthSummary donut", () => {
     );
   });
 
-  it("shows the centre label and both percentages, hidden from assistive tech", () => {
+  it("shows the label and both percentages, hidden from assistive tech", () => {
     const { container } = renderSummary();
     expect(
       screen.getByText("78%").closest("[aria-hidden='true']"),
@@ -504,7 +500,8 @@ describe("GcMonthSummary tooltip", () => {
       hidden: true,
     });
   // The donut is aria-hidden too; its centre label is inside it.
-  const donut = () => screen.getByText("Goal hit");
+  // The label sits right above the donut, which is the hover and tap target.
+  const donut = () => screen.getByText("Goal hit").nextElementSibling as HTMLElement;
 
   it("shows Goal hit, the month and each ring's percentage while the mouse is over the donut", async () => {
     const user = userEvent.setup();

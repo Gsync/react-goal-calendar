@@ -16,25 +16,13 @@ import { useMonth } from "../../lib/useMonth";
 import { warn } from "../../lib/warn";
 import { Donut } from "./Donut";
 import { percentText, ringValue } from "./percent";
+import { Stats } from "./Stats";
 import type { GcMonthSummaryProps } from "./types";
 import { summaryWarnings } from "./warnings";
 
 // No frame: wrap in GcCard for one. A container, so the layout follows this element's width.
 // `relative` anchors the tooltip.
 const ROOT = "gcx:@container gcx:relative gcx:box-border gcx:text-gc-fg";
-
-// Full class literals so Tailwind generates them. `muted` uses the muted text colour because the
-// row background is --gc-muted.
-const TONE_DOTS = new Map<string, string>([
-  ["primary", "gcx:bg-gc-primary"],
-  ["success", "gcx:bg-gc-success"],
-  ["warning", "gcx:bg-gc-warning"],
-  ["danger", "gcx:bg-gc-danger"],
-  ["ring-1", "gcx:bg-gc-ring-1"],
-  ["ring-2", "gcx:bg-gc-ring-2"],
-  ["muted", "gcx:bg-gc-muted-fg"],
-]);
-const MUTED_DOT = "gcx:bg-gc-muted-fg";
 
 export const GcMonthSummary = forwardRef<HTMLDivElement, GcMonthSummaryProps>(
   function GcMonthSummary(
@@ -114,6 +102,8 @@ export const GcMonthSummary = forwardRef<HTMLDivElement, GcMonthSummaryProps>(
               typeof stat === "object" && stat !== null,
           )
         : [];
+    // The first half flanks the dial on the start side, the rest on the end side.
+    const half = Math.ceil(stats.length / 2);
     const values = shownRings.map((ring) =>
       ringValue(monthData?.rings?.[ring.id]),
     );
@@ -190,20 +180,21 @@ export const GcMonthSummary = forwardRef<HTMLDivElement, GcMonthSummaryProps>(
           <LiveText text={status} live={live} />
         </p>
         {(shownRings.length > 0 || stats.length > 0) && (
-          // Side by side once the content is 18rem wide (a GcCard of about 320px), else stacked.
-          <div className="gcx:mt-3 gcx:grid gcx:gap-4 gcx:@2xs:gap-x-2 gcx:@2xs:grid-cols-2 gcx:@2xs:items-center">
+          // Stacked (dial on top) below 20rem of content (a GcCard of about 350px), else the stats
+          // flank the dial. There the legend wraps at 8rem, so long ring labels can't squeeze them.
+          <div className="gcx:mt-4 gcx:grid gcx:gap-3 gcx:@xs:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gcx:@xs:items-center gcx:@xs:gap-4 gcx:@lg:gap-6">
+            <Stats stats={stats.slice(0, half)} side="start" />
             {shownRings.length > 0 && (
               <div
                 aria-hidden="true"
-                className={cn(
-                  "gcx:flex gcx:flex-col gcx:items-center gcx:gap-2",
-                  stats.length === 0 && "gcx:@2xs:col-span-2",
-                )}
+                className="gcx:order-first gcx:mb-1 gcx:flex gcx:flex-col gcx:items-center gcx:gap-2 gcx:@xs:order-none gcx:@xs:col-start-2 gcx:@xs:mb-0"
               >
+                <div className="gcx:text-base gcx:font-medium gcx:text-gc-muted-fg">
+                  {goalHit}
+                </div>
                 <Donut
                   values={values}
                   texts={texts}
-                  centerLabel={goalHit}
                   onPointerEnter={(event) => {
                     if (event.pointerType === "mouse") setDonut(event.currentTarget);
                   }}
@@ -218,7 +209,7 @@ export const GcMonthSummary = forwardRef<HTMLDivElement, GcMonthSummaryProps>(
                   }}
                 />
                 {legend && (
-                  <ul className="gcx:m-0 gcx:flex gcx:list-none gcx:flex-wrap gcx:justify-center gcx:gap-x-4 gcx:gap-y-1 gcx:p-0 gcx:text-sm gcx:text-gc-muted-fg">
+                  <ul className="gcx:m-0 gcx:flex gcx:list-none gcx:flex-wrap gcx:justify-center gcx:gap-x-3 gcx:gap-y-1 gcx:p-0 gcx:text-sm gcx:text-gc-muted-fg gcx:@xs:max-w-32">
                     {shownRings.map((ring, i) => (
                       <li
                         key={i}
@@ -237,35 +228,7 @@ export const GcMonthSummary = forwardRef<HTMLDivElement, GcMonthSummaryProps>(
                 )}
               </div>
             )}
-            {stats.length > 0 && (
-              <dl
-                className={cn(
-                  "gcx:m-0 gcx:grid gcx:min-w-0 gcx:grid-cols-2 gcx:gap-2 gcx:@2xs:grid-cols-1",
-                  shownRings.length === 0 && "gcx:@2xs:col-span-2",
-                )}
-              >
-                {stats.map((stat, i) => (
-                  <div
-                    key={i}
-                    className="gcx:flex gcx:min-w-0 gcx:flex-wrap gcx:items-center gcx:justify-between gcx:gap-x-3 gcx:gap-y-0.5 gcx:rounded-lg gcx:bg-gc-muted gcx:px-3 gcx:py-2"
-                  >
-                    <dt className="gcx:m-0 gcx:flex gcx:min-w-0 gcx:items-center gcx:gap-2 gcx:text-sm gcx:text-gc-muted-fg">
-                      <span
-                        aria-hidden="true"
-                        className={cn(
-                          "gcx:size-2.5 gcx:shrink-0 gcx:rounded-sm",
-                          TONE_DOTS.get(stat.tone ?? "muted") ?? MUTED_DOT,
-                        )}
-                      />
-                      <span className="gcx:truncate">{stat.label}</span>
-                    </dt>
-                    <dd className="gcx:m-0 gcx:text-sm gcx:font-semibold gcx:whitespace-nowrap gcx:tabular-nums">
-                      {stat.value}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-            )}
+            <Stats stats={stats.slice(half)} side="end" />
           </div>
         )}
         {donut && hasContent(tooltip) && (
